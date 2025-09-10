@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Target, Calendar, TrendingDown } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Target, Calendar, TrendingDown, Pencil } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/auth/context'
 import { format, differenceInDays } from 'date-fns'
+import { GoalUpdateModal } from './goal-update-modal'
 
 interface Goal {
   id: string
@@ -19,6 +21,7 @@ interface Goal {
 export function ActiveGoalDisplay() {
   const [activeGoal, setActiveGoal] = useState<Goal | null>(null)
   const [loading, setLoading] = useState(true)
+  const [editModalOpen, setEditModalOpen] = useState(false)
   const { user } = useAuth()
 
   useEffect(() => {
@@ -48,13 +51,19 @@ export function ActiveGoalDisplay() {
 
     fetchActiveGoal()
 
-    // Listen for goal creation events from the modal
+    // Listen for goal creation and update events from the modals
     const handleGoalCreated = () => {
       console.log('Goal creation event received, refreshing active goal')
       fetchActiveGoal()
     }
     
+    const handleGoalUpdated = () => {
+      console.log('Goal update event received, refreshing active goal')
+      fetchActiveGoal()
+    }
+    
     window.addEventListener('goalCreated', handleGoalCreated)
+    window.addEventListener('goalUpdated', handleGoalUpdated)
 
     // Set up real-time subscription for goal changes
     const channel = supabase
@@ -75,6 +84,7 @@ export function ActiveGoalDisplay() {
 
     return () => {
       window.removeEventListener('goalCreated', handleGoalCreated)
+      window.removeEventListener('goalUpdated', handleGoalUpdated)
       supabase.removeChannel(channel)
     }
   }, [user])
@@ -130,7 +140,17 @@ export function ActiveGoalDisplay() {
             <Target className="h-5 w-5 text-primary" />
             <span>Current Goal</span>
           </div>
-          <Badge variant="default">Active</Badge>
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setEditModalOpen(true)}
+              data-testid="edit-goal-button"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Badge variant="default">Active</Badge>
+          </div>
         </CardTitle>
         <CardDescription>
           Your active weight goal and progress tracking
@@ -177,6 +197,12 @@ export function ActiveGoalDisplay() {
           </div>
         </div>
       </CardContent>
+      
+      <GoalUpdateModal 
+        goal={activeGoal}
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+      />
     </Card>
   )
 }

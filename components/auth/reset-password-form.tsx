@@ -35,7 +35,7 @@ export function ResetPasswordForm() {
 
   const onSubmit = async (data: ResetPasswordData) => {
     try {
-      await resetPassword(data.email)
+      await resetPassword(data)
     } catch (error) {
       // Error handling is done in the auth context
       console.error('Reset password error:', error)

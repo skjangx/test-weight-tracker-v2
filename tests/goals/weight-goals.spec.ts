@@ -108,7 +108,7 @@ test.describe('Epic 2: Weight Goals Management', () => {
     })
   })
 
-  test.describe.skip('US-2.2: Update Active Goal', () => {
+  test.describe('US-2.2: Update Active Goal', () => {
     test.beforeEach(async ({ page }) => {
       // Create a goal before each update test
       await testUtils.createTestGoal(page, { targetWeight: 80, deadline: '2025-12-31' })
@@ -127,7 +127,17 @@ test.describe('Epic 2: Weight Goals Management', () => {
     test('should allow user to modify deadline', async ({ page }) => {
       await page.click('[data-testid="edit-goal-button"]')
       
-      await page.fill('input[name="deadline"]', '2026-01-31')
+      // Click the date picker button to open the calendar (it shows current date, not "Pick a date")
+      await page.locator('button[class*="pl-3 text-left font-normal"]').click()
+      await page.waitForSelector('[role="gridcell"]')
+      
+      // Navigate to January 2026 (from current date which should be December 2025)
+      await page.locator('button[aria-label="Go to the Next Month"]').first().click()
+      await page.waitForTimeout(300)
+      
+      // Click on day 31 in January 2026
+      await page.locator('[role="gridcell"]:has-text("31")').last().click()
+      
       await page.click('button:has-text("Update Goal")')
       
       await testUtils.waitForToast(page, 'Goal updated successfully')

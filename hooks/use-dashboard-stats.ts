@@ -62,13 +62,19 @@ export function useDashboardStats() {
 
     fetchStats()
 
-    // Listen for manual stats refresh events
+    // Listen for manual stats refresh and goal update events
     const handleStatsRefresh = () => {
       console.log('Stats refresh event received, refetching stats')
       fetchStats()
     }
     
+    const handleGoalUpdated = () => {
+      console.log('Goal updated event received, refetching stats')
+      fetchStats()
+    }
+    
     window.addEventListener('statsRefresh', handleStatsRefresh)
+    window.addEventListener('goalUpdated', handleGoalUpdated)
 
     // Set up real-time subscriptions for stats updates
     const channels = [
@@ -114,6 +120,7 @@ export function useDashboardStats() {
 
     return () => {
       window.removeEventListener('statsRefresh', handleStatsRefresh)
+      window.removeEventListener('goalUpdated', handleGoalUpdated)
       channels.forEach(channel => supabase.removeChannel(channel))
     }
   }, [user])

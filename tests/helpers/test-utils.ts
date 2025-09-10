@@ -135,13 +135,34 @@ export class TestUtils {
     
     // Parse the deadline date to navigate to correct month/year
     const targetDate = new Date(goal.deadline)
-    const targetMonth = targetDate.getMonth() // 0-based
     const targetYear = targetDate.getFullYear()
+    const targetMonth = targetDate.getMonth() // 0-based (0 = January)
     const targetDay = targetDate.getDate()
     
-    // For simplicity, just click the target day if it's in the current view
-    // This is a simplified version - in real tests you'd need proper navigation
-    await page.locator(`[role="gridcell"]:has-text("${targetDay}")`).first().click()
+    // Navigate to target year/month
+    const currentDate = new Date()
+    const currentYear = currentDate.getFullYear()
+    const currentMonth = currentDate.getMonth() // 0-based
+    
+    // Calculate months difference
+    const monthDiff = (targetYear - currentYear) * 12 + (targetMonth - currentMonth)
+    
+    if (monthDiff > 0) {
+      // Navigate forward
+      for (let i = 0; i < monthDiff; i++) {
+        await page.locator('button[aria-label="Go to the Next Month"]').first().click()
+        await page.waitForTimeout(300)
+      }
+    } else if (monthDiff < 0) {
+      // Navigate backward  
+      for (let i = 0; i < Math.abs(monthDiff); i++) {
+        await page.locator('button[aria-label="Go to the Previous Month"]').first().click()
+        await page.waitForTimeout(300)
+      }
+    }
+    
+    // Click the target day
+    await page.locator(`[role="gridcell"]:has-text("${targetDay}")`).last().click()
     
     await page.click('button:has-text("Create Goal")')
     await this.waitForToast(page, 'Goal created successfully')

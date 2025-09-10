@@ -7,7 +7,7 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { GoalCreationModal } from '@/components/goals/goal-creation-modal'
 import { ActiveGoalDisplay } from '@/components/goals/active-goal-display'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
-import { LogOut, User, Target, TrendingDown } from 'lucide-react'
+import { LogOut, User, TrendingDown } from 'lucide-react'
 
 export default function DashboardPage() {
   const { user, logout } = useAuth()
