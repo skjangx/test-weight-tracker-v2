@@ -4,34 +4,45 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuth } from '@/lib/auth/context'
 import { resetPasswordSchema } from '@/lib/auth/validation'
-import type { ResetPasswordData } from '@/lib/auth/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+
+type ResetPasswordData = {
+  email: string
+}
 
 export function ResetPasswordForm() {
   const { resetPassword } = useAuth()
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting }
-  } = useForm<ResetPasswordData>({
-    resolver: zodResolver(resetPasswordSchema)
+  const form = useForm<ResetPasswordData>({
+    resolver: zodResolver(resetPasswordSchema),
+    mode: 'onChange',
+    defaultValues: {
+      email: ''
+    }
   })
 
   const onSubmit = async (data: ResetPasswordData) => {
     try {
-      await resetPassword(data)
-      // Navigation will be handled by the auth context
+      await resetPassword(data.email)
     } catch (error) {
       // Error handling is done in the auth context
-      console.error('Password reset error:', error)
+      console.error('Reset password error:', error)
     }
   }
+
+  const isSubmitting = form.formState.isSubmitting
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -42,38 +53,44 @@ export function ResetPasswordForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              {...register('email')}
-              disabled={isSubmitting}
-              className={errors.email ? 'border-red-500' : ''}
-              autoComplete="email"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="Enter your email"
+                      disabled={isSubmitting}
+                      autoComplete="email"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.email && (
-              <p className="text-sm text-red-500">{errors.email.message}</p>
-            )}
-          </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending Reset Link...
-              </>
-            ) : (
-              'Send Reset Link'
-            )}
-          </Button>
-        </form>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending Reset Link...
+                </>
+              ) : (
+                'Send Reset Link'
+              )}
+            </Button>
+          </form>
+        </Form>
 
         <div className="text-center">
           <Link

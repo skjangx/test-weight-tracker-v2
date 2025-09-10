@@ -25,7 +25,7 @@ export default function Home() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/20">
       <Card className="p-6">
         <CardContent className="flex flex-col items-center space-y-4 p-0">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <Loader2 className="h-8 w-8 animate-spin" data-testid="loader" />
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-bold">Weight Tracker</h1>
             <p className="text-sm text-muted-foreground">
