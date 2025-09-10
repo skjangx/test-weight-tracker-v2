@@ -4,10 +4,14 @@ import { useAuth } from '@/lib/auth/context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { GoalCreationModal } from '@/components/goals/goal-creation-modal'
+import { ActiveGoalDisplay } from '@/components/goals/active-goal-display'
+import { useDashboardStats } from '@/hooks/use-dashboard-stats'
 import { LogOut, User, Target, TrendingDown } from 'lucide-react'
 
 export default function DashboardPage() {
   const { user, logout } = useAuth()
+  const { stats, loading: statsLoading } = useDashboardStats()
 
   const handleLogout = async () => {
     try {
@@ -49,37 +53,8 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Welcome Card */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Target className="h-5 w-5 text-primary" />
-                <span>Welcome to Weight Tracker!</span>
-              </CardTitle>
-              <CardDescription>
-                Your weight management journey starts here. Track progress, set goals, and achieve success.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  🎉 Authentication system successfully implemented! You can now:
-                </p>
-                <ul className="list-disc list-inside space-y-2 text-sm">
-                  <li>Register new accounts with secure password requirements</li>
-                  <li>Log in with email and password</li>
-                  <li>Reset passwords via email</li>
-                  <li>Switch between light and dark themes</li>
-                  <li>Enjoy secure session management with Supabase Auth</li>
-                </ul>
-                <div className="pt-4">
-                  <p className="text-xs text-muted-foreground">
-                    🚀 Ready for Phase 2: Core weight tracking features coming next!
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Active Goal Display */}
+          <ActiveGoalDisplay />
 
           {/* Quick Stats Card */}
           <Card>
@@ -92,55 +67,41 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-2xl font-bold">
+                    {statsLoading ? '...' : stats.weightEntries}
+                  </p>
                   <p className="text-sm text-muted-foreground">Weight Entries</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-2xl font-bold">
+                    {statsLoading ? '...' : stats.activeGoals}
+                  </p>
                   <p className="text-sm text-muted-foreground">Active Goals</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-2xl font-bold">
+                    {statsLoading ? '...' : stats.dayStreak}
+                  </p>
                   <p className="text-sm text-muted-foreground">Day Streak</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Next Steps Card */}
+          {/* Quick Actions Card */}
           <Card className="lg:col-span-3">
             <CardHeader>
-              <CardTitle>What&apos;s Coming Next</CardTitle>
+              <CardTitle>Quick Actions</CardTitle>
               <CardDescription>
-                Phase 1 (Foundation) is complete! Here&apos;s what we&apos;ll build in Phase 2:
+                Start your weight tracking journey by setting a goal or logging your weight.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <h4 className="font-semibold">Weight Goals</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Set target weight & deadline</li>
-                    <li>• Track daily/weekly progress</li>
-                    <li>• Visual progress indicators</li>
-                  </ul>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="font-semibold">Data Entry</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Quick weight logging</li>
-                    <li>• Daily memo notes</li>
-                    <li>• Edit/delete entries</li>
-                  </ul>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="font-semibold">Sync & Updates</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Optimistic UI updates</li>
-                    <li>• Hourly background sync</li>
-                    <li>• Manual refresh option</li>
-                  </ul>
-                </div>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <GoalCreationModal />
+                <Button size="lg" variant="outline" className="flex-1">
+                  Add Weight
+                </Button>
               </div>
             </CardContent>
           </Card>
