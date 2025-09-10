@@ -29,6 +29,60 @@
 - All authentication now uses Supabase Auth (no custom JWT or bcrypt)
 - **Last Tested:** 2025-09-10 - Full auth flow working (register → login → logout → redirect)
 
+## **Testing Strategy & Approach**
+
+### **Test-Driven Development Protocol**
+
+**For Completed Features (Epic 1: Authentication):**
+- ✅ **Post-Implementation Testing:** Create comprehensive E2E tests for already implemented features
+- ✅ **Coverage Focus:** Test all user stories and acceptance criteria from PRD
+- ✅ **Validation Purpose:** Ensure current implementation meets requirements and prevent regressions
+
+**For Future Features (Epic 2+: Weight Goals, Data Entry, etc.):**
+- 🔄 **Test-First Approach:** Write failing E2E tests BEFORE implementing features
+- 🔄 **BDD/TDD Cycle:** Write tests → Implement features → Make tests pass → Refactor
+- 🔄 **Documentation:** Tests serve as living documentation of expected behavior
+
+### **E2E Test Organization**
+
+**Current Test Structure (Epic 1 - Authentication):**
+```
+tests/
+├── auth/
+│   ├── authentication.spec.ts    # US-1.1, US-1.2, US-1.3, US-1.4
+│   ├── validation.spec.ts        # Form validation scenarios
+│   └── responsive.spec.ts        # Mobile/tablet/desktop auth pages
+└── helpers/
+    └── test-utils.ts             # Shared utilities
+```
+
+**Future Test Structure (Epics 2+):**
+- Write tests first based on PRD user stories
+- Implement features to make tests pass
+- Maintain 100% E2E test coverage as required by PRD
+
+### **Test Coverage Requirements**
+
+**Epic 1: Authentication & User Management (Implemented ✅)**
+- [x] **US-1.1:** User Registration - Email/password, validation, auto-login, toast notifications
+- [x] **US-1.2:** User Login - Supabase session, redirect, error handling, loading states
+- [x] **US-1.3:** Password Reset - Email-based reset flow (UI implemented, email integration via Supabase)
+- [x] **US-1.4:** Session Management - Persistence, auto-refresh, logout, redirect
+
+**Future Epics (Test-First Implementation):**
+- [ ] **Epic 2:** Weight Goals Management (Write tests first, then implement)
+- [ ] **Epic 3:** Weight Data Entry & Tracking (Write tests first, then implement)
+- [ ] **Epic 4:** Progress Visualization (Write tests first, then implement)
+
+### **Testing Best Practices**
+
+1. **Test Real User Scenarios:** Focus on complete user journeys, not isolated components
+2. **Use PRD Acceptance Criteria:** Each test maps directly to PRD user story acceptance criteria
+3. **Test All Breakpoints:** Mobile (375px), Tablet (768px), Desktop (1280px)
+4. **Error Handling:** Test network failures, validation errors, edge cases
+5. **Performance:** Ensure loading states, optimistic updates, proper UX feedback
+6. **Accessibility:** Test with screen readers, keyboard navigation, focus management
+
 ## **1. MCP Server Integration Requirements**
 
 ### **1.1 Mandatory MCP Server Usage**
