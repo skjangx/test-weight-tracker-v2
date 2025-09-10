@@ -32,18 +32,18 @@ A focused, single-purpose weight tracking application that provides users with c
 - **Styling:** Tailwind CSS
 - **State Management:** React Query with optimistic updates
 - **Backend:** Supabase (PostgreSQL)
-- **Authentication:** Custom JWT-based with httpOnly cookies
+- **Authentication:** Supabase Auth (no email confirmation required)
 - **Testing:** Playwright (E2E + Visual), Jest (Unit)
 - **Deployment:** Vercel (Frontend), Supabase Cloud (Backend)
 
 ### **2.2 Security Requirements**
-- All passwords hashed using bcrypt (min cost factor 10)
-- JWT tokens with 48-hour expiration
-- Session timeout warnings at 30 minutes before expiration
-- Security questions for password reset
+- Supabase Auth handles password hashing and security
+- Session management via Supabase (automatic refresh tokens)
+- Password reset via email (no email confirmation for signup)
 - Environment variables for all secrets (no fallbacks)
 - HTTPS only in production
 - Input sanitization for all user inputs
+- Row Level Security (RLS) policies for data isolation
 
 ### **2.3 Performance Requirements**
 - Optimistic UI updates for all user actions
@@ -58,25 +58,20 @@ A focused, single-purpose weight tracking application that provides users with c
 ### **Epic 1: Authentication & User Management**
 
 **US-1.1: User Registration**
-*As a new user, I can sign up with username and password*
+*As a new user, I can sign up with email and password*
 
 **Acceptance Criteria:**
-- Username must be unique (3-20 characters)
+- Email must be valid format and unique
 - Password requirements: min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
-- Select one security question from predefined list:
-  - "What city were you born in?"
-  - "What was your first pet's name?"
-  - "What was your favorite teacher's last name?"
-  - "What street did you grow up on?"
-  - "What was your mother's maiden name?"
-- Password and security answer hashed before storage
+- No email confirmation required (disabled in Supabase settings)
 - Auto-login after successful registration
 - Show loading skeleton during registration
 - Toast notification on success/error
+- User profile created with email as identifier
 
 **Test Scenarios:**
 - Valid registration flow
-- Duplicate username handling
+- Duplicate email handling
 - Weak password rejection
 - Network error handling
 
@@ -86,8 +81,8 @@ A focused, single-purpose weight tracking application that provides users with c
 *As a user, I can log in to access my data*
 
 **Acceptance Criteria:**
-- JWT token stored in httpOnly cookie
-- 48-hour session duration
+- Supabase session management (automatic token refresh)
+- Long-lived session (configurable expiration)
 - Redirect to main page on success
 - Error message for invalid credentials
 - Loading state during authentication
@@ -102,37 +97,37 @@ A focused, single-purpose weight tracking application that provides users with c
 ---
 
 **US-1.3: Password Reset**
-*As a user, I can reset my password using security question*
+*As a user, I can reset my password using my email*
 
 **Acceptance Criteria:**
-- Enter username to initiate reset
-- Answer security question correctly
+- Enter email to initiate reset
+- Supabase sends password reset email
+- Click link in email to reset password
 - New password must meet requirements
-- Cannot reuse current password
-- Session invalidated after reset
+- All sessions invalidated after reset
 - Toast notification on success
 
 **Test Scenarios:**
 - Complete reset flow
-- Wrong security answer
-- Password requirement validation
+- Invalid email handling
+- Password reset link expiration
 
 ---
 
 **US-1.4: Session Management**
-*As a user, I receive warnings before session timeout*
+*As a user, my session is automatically managed by Supabase*
 
 **Acceptance Criteria:**
-- Warning modal 30 minutes before timeout
-- Option to extend session
-- Auto-logout after 48 hours
+- Automatic token refresh handled by Supabase
+- Session persists across browser refresh
+- Logout clears session and redirects to login
 - Clear all local data on logout
-- Redirect to login page
+- Handle session expiration gracefully
 
 **Test Scenarios:**
-- Timeout warning display
-- Session extension
-- Auto-logout functionality
+- Session persistence
+- Automatic token refresh
+- Logout functionality
 
 ---
 
