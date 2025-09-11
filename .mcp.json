@@ -6,6 +6,12 @@
         "shadcn@latest",
         "mcp"
       ]
+    },
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "@supabase/mcp-server"
+      ]
     }
   }
 }
