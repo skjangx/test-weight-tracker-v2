@@ -124,48 +124,79 @@ export class TestUtils {
     deadline: string
     isActive?: boolean 
   }) {
-    await page.click('button:has-text("Set Goal")')
-    
-    // Fill target weight
-    await page.fill('input[type="number"]', goal.targetWeight.toString())
-    
-    // Handle date picker - click to open and select date
-    await page.click('button:has(span:has-text("Pick a date"))')
-    await page.waitForSelector('[role="gridcell"]')
-    
-    // Parse the deadline date to navigate to correct month/year
-    const targetDate = new Date(goal.deadline)
-    const targetYear = targetDate.getFullYear()
-    const targetMonth = targetDate.getMonth() // 0-based (0 = January)
-    const targetDay = targetDate.getDate()
-    
-    // Navigate to target year/month
-    const currentDate = new Date()
-    const currentYear = currentDate.getFullYear()
-    const currentMonth = currentDate.getMonth() // 0-based
-    
-    // Calculate months difference
-    const monthDiff = (targetYear - currentYear) * 12 + (targetMonth - currentMonth)
-    
-    if (monthDiff > 0) {
-      // Navigate forward
-      for (let i = 0; i < monthDiff; i++) {
-        await page.locator('button[aria-label="Go to the Next Month"]').first().click()
-        await page.waitForTimeout(300)
+    // If creating an active goal, use the UI (default behavior)
+    if (goal.isActive !== false) {
+      await page.click('button:has-text("Set Goal")')
+      
+      // Fill target weight
+      await page.fill('input[type="number"]', goal.targetWeight.toString())
+      
+      // Handle date picker - click to open and select date
+      await page.click('button:has(span:has-text("Pick a date"))')
+      await page.waitForSelector('[role="gridcell"]')
+      
+      // Parse the deadline date to navigate to correct month/year
+      const targetDate = new Date(goal.deadline)
+      const targetYear = targetDate.getFullYear()
+      const targetMonth = targetDate.getMonth() // 0-based (0 = January)
+      const targetDay = targetDate.getDate()
+      
+      // Navigate to target year/month
+      const currentDate = new Date()
+      const currentYear = currentDate.getFullYear()
+      const currentMonth = currentDate.getMonth() // 0-based
+      
+      // Calculate months difference
+      const monthDiff = (targetYear - currentYear) * 12 + (targetMonth - currentMonth)
+      
+      if (monthDiff > 0) {
+        // Navigate forward
+        for (let i = 0; i < monthDiff; i++) {
+          await page.locator('button[aria-label="Go to the Next Month"]').first().click()
+          await page.waitForTimeout(300)
+        }
+      } else if (monthDiff < 0) {
+        // Navigate backward  
+        for (let i = 0; i < Math.abs(monthDiff); i++) {
+          await page.locator('button[aria-label="Go to the Previous Month"]').first().click()
+          await page.waitForTimeout(300)
+        }
       }
-    } else if (monthDiff < 0) {
-      // Navigate backward  
-      for (let i = 0; i < Math.abs(monthDiff); i++) {
-        await page.locator('button[aria-label="Go to the Previous Month"]').first().click()
-        await page.waitForTimeout(300)
-      }
+      
+      // Click the target day
+      await page.locator(`[role="gridcell"]:has-text("${targetDay}")`).last().click()
+      
+      await page.click('button:has-text("Create Goal")')
+      await this.waitForToast(page, 'Goal created successfully')
+    } else {
+      // For inactive goals, create via direct database insertion
+      // This is a simplified approach for testing - in real scenarios inactive goals
+      // would be created by first creating an active goal then creating a new one
+      await page.evaluate(async ({ targetWeight, deadline }: { targetWeight: number, deadline: string }) => {
+        // Access supabase from window (assuming it's available globally in tests)
+        const { createClient } = await import('@supabase/supabase-js')
+        const supabase = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+
+        // Get current user from auth
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (user) {
+          await supabase.from('goals').insert({
+            user_id: user.id,
+            target_weight: targetWeight,
+            deadline: deadline,
+            is_active: false,
+            created_at: new Date(Date.now() - 86400000).toISOString() // 1 day ago
+          })
+        }
+      }, { targetWeight: goal.targetWeight, deadline: goal.deadline })
+      
+      // Wait a bit for the database operation
+      await page.waitForTimeout(1000)
     }
-    
-    // Click the target day
-    await page.locator(`[role="gridcell"]:has-text("${targetDay}")`).last().click()
-    
-    await page.click('button:has-text("Create Goal")')
-    await this.waitForToast(page, 'Goal created successfully')
   }
 
   /**

@@ -1,17 +1,20 @@
 "use client"
 
+import { useState } from 'react'
 import { useAuth } from '@/lib/auth/context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { GoalCreationModal } from '@/components/goals/goal-creation-modal'
 import { ActiveGoalDisplay } from '@/components/goals/active-goal-display'
+import { GoalHistorySheet } from '@/components/goals/goal-history-sheet'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
-import { LogOut, User, TrendingDown } from 'lucide-react'
+import { LogOut, User, TrendingDown, History } from 'lucide-react'
 
 export default function DashboardPage() {
   const { user, logout } = useAuth()
   const { stats, loading: statsLoading } = useDashboardStats()
+  const [goalHistoryOpen, setGoalHistoryOpen] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -102,11 +105,25 @@ export default function DashboardPage() {
                 <Button size="lg" variant="outline" className="flex-1">
                   Add Weight
                 </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setGoalHistoryOpen(true)}
+                >
+                  <History className="mr-2 h-4 w-4" />
+                  Goal History
+                </Button>
               </div>
             </CardContent>
           </Card>
         </div>
       </main>
+      
+      <GoalHistorySheet 
+        open={goalHistoryOpen}
+        onOpenChange={setGoalHistoryOpen}
+      />
     </div>
   )
 }
