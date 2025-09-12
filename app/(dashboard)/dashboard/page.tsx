@@ -11,12 +11,16 @@ import { GoalHistorySheet } from '@/components/goals/goal-history-sheet'
 import { AddWeightDialog } from '@/components/weight/add-weight-dialog'
 import { WeightEntriesTable, type WeightEntriesTableRef } from '@/components/weight/weight-entries-table'
 import { EntryReminderBanner } from '@/components/dashboard/entry-reminder-banner'
+import { WeightTrendGraph } from '@/components/visualization/weight-trend-graph'
+import { MilestoneTracker } from '@/components/effects/confetti-celebration'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
+import { useWeightData } from '@/hooks/use-weight-data'
 import { LogOut, User, TrendingDown, History } from 'lucide-react'
 
 export default function DashboardPage() {
   const { user, logout } = useAuth()
   const { stats, loading: statsLoading } = useDashboardStats()
+  const { startingWeight, currentWeight } = useWeightData()
   const [goalHistoryOpen, setGoalHistoryOpen] = useState(false)
   const [addWeightOpen, setAddWeightOpen] = useState(false)
   const weightEntriesTableRef = useRef<WeightEntriesTableRef>(null)
@@ -131,6 +135,11 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
+          {/* Weight Trend Graph */}
+          <div className="lg:col-span-3">
+            <WeightTrendGraph />
+          </div>
+
           {/* Weight Entries Table */}
           <div className="lg:col-span-3">
             <WeightEntriesTable ref={weightEntriesTableRef} />
@@ -147,6 +156,12 @@ export default function DashboardPage() {
         open={addWeightOpen}
         onOpenChange={setAddWeightOpen}
         onSuccess={() => weightEntriesTableRef.current?.refreshEntries()}
+      />
+      
+      {/* Milestone Celebrations */}
+      <MilestoneTracker 
+        startingWeight={startingWeight}
+        currentWeight={currentWeight}
       />
     </div>
   )
