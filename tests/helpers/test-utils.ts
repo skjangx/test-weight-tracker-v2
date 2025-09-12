@@ -34,6 +34,19 @@ export const authHelpers = {
     
     const submitButton = page.locator('button[type="submit"]')
     await submitButton.click()
+    
+    // Wait for either dashboard redirect or error
+    try {
+      await page.waitForURL('/dashboard', { timeout: 10000 })
+    } catch (error) {
+      // If still on register page, there might be an error - log it for debugging
+      const currentUrl = page.url()
+      if (currentUrl.includes('/register')) {
+        const errorMessage = await page.locator('[data-slot="form-message"]').textContent().catch(() => 'No error message found')
+        console.error(`Registration failed for ${credentials.email}. Error: ${errorMessage}. Current URL: ${currentUrl}`)
+        throw new Error(`Registration failed: ${errorMessage}`)
+      }
+    }
   },
 
   /**

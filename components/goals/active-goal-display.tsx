@@ -60,6 +60,7 @@ export function ActiveGoalDisplay() {
             .select('id, weight, date, created_at')
             .eq('user_id', user.id)
             .order('date', { ascending: false })
+            .order('created_at', { ascending: false })
 
           if (entriesError) {
             console.error('Error fetching weight entries:', entriesError)
@@ -100,12 +101,18 @@ export function ActiveGoalDisplay() {
       console.log('Goal update event received, refreshing data')
       fetchData()
     }
+
+    const handleWeightEntryCreated = () => {
+      console.log('Weight entry event received, refreshing data')
+      fetchData()
+    }
     
     window.addEventListener('goalCreated', handleGoalCreated)
     window.addEventListener('goalUpdated', handleGoalUpdated)
+    window.addEventListener('weightEntryCreated', handleWeightEntryCreated)
 
-    // Set up real-time subscription for goal changes
-    const channel = supabase
+    // Set up real-time subscriptions for goal and weight entry changes
+    const goalsChannel = supabase
       .channel('goals_changes')
       .on('postgres_changes', 
         { 
@@ -115,7 +122,23 @@ export function ActiveGoalDisplay() {
           filter: `user_id=eq.${user?.id}` 
         }, 
         (payload) => {
-          console.log('Real-time change detected:', payload)
+          console.log('Goals real-time change detected:', payload)
+          fetchData()
+        }
+      )
+      .subscribe()
+
+    const weightEntriesChannel = supabase
+      .channel('weight_entries_changes_for_goals')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'weight_entries',
+          filter: `user_id=eq.${user?.id}` 
+        }, 
+        (payload) => {
+          console.log('Weight entries real-time change detected:', payload)
           fetchData()
         }
       )
@@ -124,7 +147,9 @@ export function ActiveGoalDisplay() {
     return () => {
       window.removeEventListener('goalCreated', handleGoalCreated)
       window.removeEventListener('goalUpdated', handleGoalUpdated)
-      supabase.removeChannel(channel)
+      window.removeEventListener('weightEntryCreated', handleWeightEntryCreated)
+      supabase.removeChannel(goalsChannel)
+      supabase.removeChannel(weightEntriesChannel)
     }
   }, [user])
 
@@ -171,8 +196,30 @@ export function ActiveGoalDisplay() {
   const daysRemaining = differenceInDays(new Date(activeGoal.deadline), new Date())
   const isOverdue = daysRemaining < 0
 
-  // Progress calculations
-  const currentWeight = weightEntries.length > 0 ? weightEntries[0].weight : null
+  // Progress calculations - apply same averaging logic as weight entries table
+  const getCurrentWeight = () => {
+    if (weightEntries.length === 0) return null
+    
+    // Group entries by date and get the most recent date's average
+    const groupedByDate = weightEntries.reduce((acc, entry) => {
+      const date = entry.date
+      if (!acc[date]) {
+        acc[date] = []
+      }
+      acc[date].push(entry.weight)
+      return acc
+    }, {} as Record<string, number[]>)
+    
+    // Get the most recent date (first key since entries are ordered by date DESC)
+    const dates = Object.keys(groupedByDate).sort().reverse()
+    if (dates.length === 0) return null
+    
+    const mostRecentDateWeights = groupedByDate[dates[0]]
+    const average = mostRecentDateWeights.reduce((sum, weight) => sum + weight, 0) / mostRecentDateWeights.length
+    return Math.round(average * 100) / 100
+  }
+  
+  const currentWeight = getCurrentWeight()
   const startWeight = weightEntries.length > 0 ? weightEntries[weightEntries.length - 1].weight : null
   const weightToLose = currentWeight ? Math.max(0, currentWeight - activeGoal.target_weight) : 0
   
@@ -224,6 +271,8 @@ export function ActiveGoalDisplay() {
   const progressStatus = getProgressStatus()
   const projectedDate = calculateProjectedDate()
   const isGoalAchieved = currentWeight && currentWeight <= activeGoal.target_weight
+
+
 
   return (
     <Card className="lg:col-span-2" data-testid="active-goal">
@@ -306,7 +355,12 @@ export function ActiveGoalDisplay() {
               <div>
                 <p className="text-xs font-medium text-muted-foreground">Weight to Lose</p>
                 <p className="text-lg font-semibold" data-testid="weight-to-lose">
-                  {weightToLose > 0 ? `${weightToLose.toFixed(1)} kg to go` : 'Goal achieved!'}
+                  {!currentWeight 
+                    ? 'Add weight entries to track progress'
+                    : weightToLose > 0 
+                      ? `${weightToLose.toFixed(1)} kg to go` 
+                      : 'Goal achieved!'
+                  }
                 </p>
               </div>
             </div>

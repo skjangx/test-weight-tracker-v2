@@ -78,6 +78,10 @@ export function AddWeightDialog({ open, onOpenChange, onSuccess }: AddWeightDial
       }
 
       toast.success('Weight entry saved')
+      
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('weightEntryCreated'))
+      
       onSuccess?.()
       form.reset()
       onOpenChange(false)
