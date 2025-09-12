@@ -953,7 +953,7 @@ Response: { milestones: Milestone[] }
 - [x] **US-2.2:** Update Active Goal - ✅ Completed (2025-09-11)
 - [x] **US-2.3:** View Goal History - ✅ Completed (2025-09-11)
 - [x] **US-2.4:** Delete Goals - ✅ Completed (2025-09-11)
-- [🔄] **US-2.5:** Goal Progress Display - 🔄 Partially Complete (basic display elements)
+- [x] **US-2.5:** Goal Progress Display - ✅ Completed (2025-09-12) *Real-time progress tracking with all metrics*
 
 ### **Epic 3: Weight Data Entry**
 - [x] **US-3.1:** Add Weight Entry - ✅ Completed (2025-09-12) *See implementation notes below*

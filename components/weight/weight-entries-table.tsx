@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/auth/context'
 import type { WeightEntry } from '@/lib/schemas/weight-entry'
+import { EditWeightDialog } from './edit-weight-dialog'
 
 export interface WeightEntriesTableRef {
   refreshEntries: () => void
@@ -22,6 +23,9 @@ export interface WeightEntriesTableRef {
 export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref) => {
   const [entries, setEntries] = useState<WeightEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [selectedEntry, setSelectedEntry] = useState<WeightEntry | null>(null)
+  const [individualEntries, setIndividualEntries] = useState<WeightEntry[]>([])
   const { user } = useAuth()
 
   const fetchEntries = useCallback(async () => {
@@ -74,6 +78,9 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
         })
 
         setEntries(averagedEntries)
+        
+        // Store individual entries for editing
+        setIndividualEntries(data || [])
       } catch (error) {
         console.error('Error fetching entries:', error)
     } finally {
@@ -113,6 +120,22 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
   useImperativeHandle(ref, () => ({
     refreshEntries: fetchEntries
   }))
+
+  const handleRowClick = (entry: any) => {
+    // For averaged entries, find the most recent individual entry for that date
+    if (entry.isAveraged) {
+      const entriesForDate = individualEntries.filter(e => e.date === entry.date)
+      const mostRecentEntry = entriesForDate.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )[0]
+      setSelectedEntry(mostRecentEntry)
+    } else {
+      // Find the individual entry by date (since ID might be different after averaging)
+      const individualEntry = individualEntries.find(e => e.date === entry.date)
+      setSelectedEntry(individualEntry || entry)
+    }
+    setEditModalOpen(true)
+  }
 
   if (loading) {
     return (
@@ -163,7 +186,12 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
           </TableHeader>
           <TableBody>
             {entries.map((entry) => (
-              <TableRow key={entry.id} data-testid="weight-entry-row">
+              <TableRow 
+                key={entry.id} 
+                data-testid="weight-entry-row"
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => handleRowClick(entry)}
+              >
                 <TableCell>{format(new Date(entry.date), 'MMM dd, yyyy')}</TableCell>
                 <TableCell className="font-medium">
                   {entry.weight}
@@ -177,6 +205,22 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
           </TableBody>
         </Table>
       </CardContent>
+      
+      {selectedEntry && (
+        <EditWeightDialog
+          open={editModalOpen}
+          onOpenChange={(open) => {
+            setEditModalOpen(open)
+            if (!open) {
+              setSelectedEntry(null) // Clear selection when modal closes
+            }
+          }}
+          entry={selectedEntry}
+          onSuccess={() => {
+            fetchEntries() // Refresh table after successful edit
+          }}
+        />
+      )}
     </Card>
   )
 })

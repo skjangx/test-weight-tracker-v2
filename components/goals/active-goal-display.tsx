@@ -107,9 +107,15 @@ export function ActiveGoalDisplay() {
       fetchData()
     }
     
+    const handleWeightEntryUpdated = () => {
+      console.log('Weight entry updated event received, refreshing data')
+      fetchData()
+    }
+    
     window.addEventListener('goalCreated', handleGoalCreated)
     window.addEventListener('goalUpdated', handleGoalUpdated)
     window.addEventListener('weightEntryCreated', handleWeightEntryCreated)
+    window.addEventListener('weightEntryUpdated', handleWeightEntryUpdated)
 
     // Set up real-time subscriptions for goal and weight entry changes
     const goalsChannel = supabase
@@ -148,6 +154,7 @@ export function ActiveGoalDisplay() {
       window.removeEventListener('goalCreated', handleGoalCreated)
       window.removeEventListener('goalUpdated', handleGoalUpdated)
       window.removeEventListener('weightEntryCreated', handleWeightEntryCreated)
+      window.removeEventListener('weightEntryUpdated', handleWeightEntryUpdated)
       supabase.removeChannel(goalsChannel)
       supabase.removeChannel(weightEntriesChannel)
     }
