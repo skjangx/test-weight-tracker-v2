@@ -959,7 +959,7 @@ Response: { milestones: Milestone[] }
 - [x] **US-3.1:** Add Weight Entry - ✅ Completed (2025-09-12) *See implementation notes below*
 - [x] **US-3.2:** Edit Weight Entry - ✅ Completed (2025-09-12) *Clickable table rows with modal edit form*
 - [x] **US-3.3:** Delete Weight Entry - ✅ Completed (2025-09-12) *Integrated delete with confirmation dialog*
-- [ ] **US-3.4:** Entry Reminder - ⏳ Pending
+- [x] **US-3.4:** Entry Reminder - ✅ Completed (2025-09-12) *Blue-themed banner with dismissal & Quick Add*
 
 ### **Epic 4: Data Visualization**
 - [ ] **US-4.1:** Weight Trend Graph - ⏳ Pending
@@ -995,9 +995,9 @@ Response: { milestones: Milestone[] }
 
 ### **Progress Summary**
 - **Total User Stories:** 47
-- **Completed:** 12 (26%)
+- **Completed:** 13 (28%)
 - **In Progress:** 0 (0%)
-- **Pending:** 35 (74%)
+- **Pending:** 34 (72%)
 - **Blocked:** 0 (0%)
 
 ### **Current Sprint Focus**
