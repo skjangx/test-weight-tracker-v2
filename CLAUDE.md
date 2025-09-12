@@ -260,13 +260,32 @@ Follow the [gitmoji guide](https://gitmoji.dev/) for descriptive commits:
 
 ### **2.2 Commit Grouping & Timing**
 
+**CRITICAL: Separate Feature Implementation from Documentation Updates**
+
+**✅ Correct Commit Sequence (Feature Implementation FIRST):**
+```bash
+# 1. Feature implementation commit
+✨ feat: implement add weight entry with real-time updates (US-3.1)
+
+# 2. Documentation updates commit (separate)
+📝 docs: update guidelines based on US-3.1 lessons learned
+```
+
+**❌ Incorrect: Bundling Feature + Documentation (avoid this)**
+```bash
+# Wrong - mixed feature and documentation in single commit
+📝 docs: comprehensive updates based on US-3.1 lessons learned
+# ^ This bundles both feature code AND documentation changes
+```
+
 **Logical Commit Groups:**
 
-1. **Feature Implementation (per user story):**
+1. **Feature Implementation (per user story) - ALWAYS SEPARATE:**
    ```bash
    ✨ feat: implement weight goal creation (US-2.1)
-   💄 style: add goal progress visualization
+   💄 style: add goal progress visualization  
    ✅ test: add E2E tests for goal creation
+   # THEN separately:
    📝 docs: update API documentation for goals
    ```
 
@@ -274,19 +293,22 @@ Follow the [gitmoji guide](https://gitmoji.dev/) for descriptive commits:
    ```bash
    🐛 fix: resolve weight calculation rounding error
    ✅ test: add test case for edge case weight values
+   # THEN separately:
    📝 docs: document weight validation rules
    ```
 
-3. **Refactoring Groups:**
+3. **Documentation-Only Updates:**
    ```bash
-   ♻️ refactor: extract date utilities to shared module
-   ♻️ refactor: simplify weight calculation logic
-   ✅ test: update tests for refactored utilities
+   📝 docs: add Common Pitfalls & Solutions section
+   📝 docs: enhance E2E Testing Best Practices  
+   📝 docs: update Implementation Status in PRD
    ```
 
 **Commit Timing Guidelines:**
+- **Feature First, Docs Second:** Always commit working feature before documentation
 - **Atomic Commits:** Each commit should represent one logical change
 - **Working State:** Every commit should leave the app in a working state
+- **Separate Concerns:** Never mix feature code with documentation updates
 - **Feature Branches:** Use feature branches for user stories
 - **Daily Commits:** Commit work at least once daily
 - **Pre-Push:** Run full test suite before pushing
