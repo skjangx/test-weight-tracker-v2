@@ -957,8 +957,8 @@ Response: { milestones: Milestone[] }
 
 ### **Epic 3: Weight Data Entry**
 - [x] **US-3.1:** Add Weight Entry - ✅ Completed (2025-09-12) *See implementation notes below*
-- [ ] **US-3.2:** Edit Weight Entry - ⏳ Pending
-- [ ] **US-3.3:** Delete Weight Entry - ⏳ Pending
+- [x] **US-3.2:** Edit Weight Entry - ✅ Completed (2025-09-12) *Clickable table rows with modal edit form*
+- [x] **US-3.3:** Delete Weight Entry - ✅ Completed (2025-09-12) *Integrated delete with confirmation dialog*
 - [ ] **US-3.4:** Entry Reminder - ⏳ Pending
 
 ### **Epic 4: Data Visualization**
@@ -995,9 +995,9 @@ Response: { milestones: Milestone[] }
 
 ### **Progress Summary**
 - **Total User Stories:** 47
-- **Completed:** 0 (0%)
+- **Completed:** 12 (26%)
 - **In Progress:** 0 (0%)
-- **Pending:** 47 (100%)
+- **Pending:** 35 (74%)
 - **Blocked:** 0 (0%)
 
 ### **Current Sprint Focus**

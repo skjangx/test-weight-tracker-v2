@@ -263,8 +263,43 @@ export class TestUtils {
    * Delete all weight entries for today
    */
   async deleteAllWeightEntriesForToday(page: any) {
-    // Implementation would depend on how we structure the deletion flow
-    // For now, this is a placeholder for the reminder tests
+    // Navigate to dashboard to see entries
+    await page.goto('/dashboard')
+    await page.waitForLoadState('networkidle')
+    
+    const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
+    
+    try {
+      // Look for entries with today's date and delete them
+      const rows = await page.locator('[data-testid="weight-entry-row"]').all()
+      
+      for (const row of rows) {
+        // Check if this row is for today's date
+        const rowText = await row.textContent()
+        const todayFormatted = new Date().toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric', 
+          year: 'numeric' 
+        }) // Format: "Sep 12, 2025"
+        
+        if (rowText?.includes(todayFormatted)) {
+          // Click on the row to open edit modal
+          await row.click()
+          
+          // Click delete button
+          await page.click('button:has-text("Delete Entry")')
+          
+          // Confirm deletion
+          await page.click('[data-testid="delete-confirmation"] button:has-text("Delete")')
+          
+          // Wait for success toast
+          await this.waitForToast(page, 'Weight entry deleted')
+        }
+      }
+    } catch (error) {
+      // If no entries exist, that's fine for our testing purposes
+      console.log('No weight entries found for today or error deleting:', error)
+    }
   }
 
   /**

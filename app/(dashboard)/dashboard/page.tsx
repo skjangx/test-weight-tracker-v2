@@ -10,6 +10,7 @@ import { ActiveGoalDisplay } from '@/components/goals/active-goal-display'
 import { GoalHistorySheet } from '@/components/goals/goal-history-sheet'
 import { AddWeightDialog } from '@/components/weight/add-weight-dialog'
 import { WeightEntriesTable, type WeightEntriesTableRef } from '@/components/weight/weight-entries-table'
+import { EntryReminderBanner } from '@/components/dashboard/entry-reminder-banner'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
 import { LogOut, User, TrendingDown, History } from 'lucide-react'
 
@@ -59,6 +60,9 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        {/* Entry Reminder Banner */}
+        <EntryReminderBanner onQuickAddClick={() => setAddWeightOpen(true)} />
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Active Goal Display */}
           <ActiveGoalDisplay />

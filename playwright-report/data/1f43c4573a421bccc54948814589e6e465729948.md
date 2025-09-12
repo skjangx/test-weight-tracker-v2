@@ -1,0 +1,58 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - button "Toggle theme" [ref=e4]:
+      - img
+      - generic [ref=e5]: Toggle theme
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - heading "Weight Tracker" [level=1] [ref=e8]
+        - paragraph [ref=e9]: Track progress, reach your goals 🏋️‍♀️
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]: Create Account
+          - generic [ref=e13]: Sign up to start tracking your weight journey
+        - generic [ref=e14]:
+          - generic [ref=e15]:
+            - generic [ref=e16]:
+              - generic [ref=e17]: Email
+              - textbox "Email" [ref=e18]: testuser1757684543311@example.com
+            - generic [ref=e19]:
+              - generic [ref=e20]: Password
+              - generic [ref=e21]:
+                - textbox "Enter your password" [ref=e22]: TestPass123!
+                - button "Show password" [ref=e23]:
+                  - img
+                  - generic [ref=e24]: Show password
+            - generic [ref=e25]:
+              - generic [ref=e26]: Confirm Password
+              - generic [ref=e27]:
+                - textbox "Confirm your password" [ref=e28]: TestPass123!
+                - button "Show password" [ref=e29]:
+                  - img
+                  - generic [ref=e30]: Show password
+            - button "Create Account" [ref=e31]
+          - paragraph [ref=e33]:
+            - text: Already have an account?
+            - link "Sign in" [ref=e34] [cursor=pointer]:
+              - /url: /login
+  - region "Notifications alt+T"
+  - generic [ref=e35]:
+    - img [ref=e37]
+    - button "Open Tanstack query devtools" [ref=e85] [cursor=pointer]:
+      - img [ref=e86] [cursor=pointer]
+  - generic [ref=e138] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e139] [cursor=pointer]:
+      - img [ref=e140] [cursor=pointer]
+    - generic [ref=e143] [cursor=pointer]:
+      - button "Open issues overlay" [ref=e144] [cursor=pointer]:
+        - generic [ref=e145] [cursor=pointer]:
+          - generic [ref=e146] [cursor=pointer]: "0"
+          - generic [ref=e147] [cursor=pointer]: "1"
+        - generic [ref=e148] [cursor=pointer]: Issue
+      - button "Collapse issues badge" [ref=e149] [cursor=pointer]:
+        - img [ref=e150] [cursor=pointer]
+  - alert [ref=e152]
+```
