@@ -96,6 +96,8 @@ tests/
 - **Environment:** Use `get_project_url`, `get_anon_key` for configuration
 - **Query Execution:** Use `execute_sql` for data operations
 - **Logging:** Use `get_logs` for debugging database issues
+- **Realtime Configuration:** Always enable realtime publication for tables needing subscriptions
+- **Project ID Verification:** Always verify correct project ID before operations
 
 **Examples:**
 ```typescript
@@ -190,6 +192,15 @@ await page.screenshot()
 - **Cross-Browser Testing:** Chrome, Firefox, Safari
 - **Mobile Testing:** Test responsive behavior at mobile breakpoints
 - **Visual Regression:** Screenshots at all breakpoints for UI changes
+
+**E2E Testing Best Practices:**
+- **Date Picker Handling:** Always check if date needs changing before interacting with picker
+- **Real-time Features:** Implement proper wait strategies and fallback mechanisms
+- **Console Error Monitoring:** Always check browser console for errors during tests
+- **Toast Notifications:** Use proper selectors and wait for specific toast messages
+- **Database State:** Verify database state changes, not just UI updates
+- **Multiple Entry Testing:** Test data processing scenarios (averaging, etc.)
+- **Fallback Patterns:** Test both real-time updates and manual refresh flows
 
 **Test Writing Best Practices:**
 ```typescript
@@ -639,9 +650,73 @@ const ERROR_MESSAGES = {
 "Error 500: Internal server error"
 ```
 
-## **7. Security Best Practices**
+## **7. Common Pitfalls & Solutions**
 
-### **7.1 Input Validation**
+### **7.1 Date/Time Handling**
+```typescript
+// ✅ Good: Allow "today" by using end of day
+date: z.date().max(
+  new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 23, 59, 59),
+  'Cannot log weight for future dates'
+)
+
+// ❌ Bad: Current timestamp makes "today" invalid
+date: z.date().max(new Date(), 'Cannot log weight for future dates')
+```
+
+### **7.2 Realtime Subscriptions**
+```typescript
+// ✅ Good: Implement fallback mechanism
+interface Props {
+  onSuccess?: () => void  // Fallback refresh callback
+}
+
+// Use ref to expose refresh method
+const tableRef = useRef<{ refreshEntries: () => void }>(null)
+
+// Enable realtime publication in Supabase
+// ALTER PUBLICATION supabase_realtime ADD TABLE weight_entries;
+
+// ❌ Bad: Rely only on realtime without fallback
+// Just using supabase.channel() without fallback
+```
+
+### **7.3 Import Management**
+```typescript
+// ✅ Good: Use existing exports
+import { supabase } from '@/lib/supabase/client'
+
+// ❌ Bad: Create duplicate instances
+import { createClient } from '@supabase/supabase-js'
+const supabase = createClient(...)
+```
+
+### **7.4 Visual Feedback for Data Transformations**
+```typescript
+// ✅ Good: Indicate when data is processed/averaged
+<TableCell className="font-medium">
+  {entry.weight}
+  {entry.isAveraged && (
+    <span className="text-amber-600 ml-1" title={`Average of ${entry.entryCount} entries`}>*</span>
+  )}
+</TableCell>
+
+// ❌ Bad: No indication of data processing
+<TableCell>{entry.weight}</TableCell>
+```
+
+### **7.5 Project ID Verification**
+```typescript
+// ✅ Good: Always verify project ID early
+const PROJECT_ID = 'duxhaovoqoztxeckdubp' // Verified correct ID
+
+// ❌ Bad: Using wrong/old project ID
+const PROJECT_ID = 'vfqjjqpuavqcxgpyqfjt' // Causes auth errors
+```
+
+## **8. Security Best Practices**
+
+### **8.1 Input Validation**
 
 ```typescript
 // ✅ Always validate and sanitize user input
@@ -654,7 +729,7 @@ const validateWeight = (weight: string): number => {
 }
 ```
 
-### **7.2 Environment Variables**
+### **8.2 Environment Variables**
 
 ```bash
 # ✅ Required environment variables (no fallbacks)
@@ -665,9 +740,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://hardcoded-url"
 ```
 
-## **8. Documentation Standards**
+## **9. Documentation Standards**
 
-### **8.1 Code Documentation**
+### **9.1 Code Documentation**
 
 ```typescript
 /**
@@ -687,7 +762,7 @@ const calculateDailyWeightLoss = (
 }
 ```
 
-### **8.2 README Updates**
+### **9.2 README Updates**
 
 Keep README.md updated with:
 - Setup instructions
@@ -696,9 +771,9 @@ Keep README.md updated with:
 - Deployment steps
 - Environment variables
 
-## **9. Quality Gates**
+## **10. Quality Gates**
 
-### **9.1 Pre-Commit Checks**
+### **10.1 Pre-Commit Checks**
 
 ```json
 {
@@ -711,7 +786,7 @@ Keep README.md updated with:
 }
 ```
 
-### **9.2 CI/CD Pipeline**
+### **10.2 CI/CD Pipeline**
 
 Required checks before merge:
 - [ ] All tests passing
@@ -721,9 +796,9 @@ Required checks before merge:
 - [ ] Performance budget met
 - [ ] Security scan passed
 
-## **10. Development Commands Reference**
+## **11. Development Commands Reference**
 
-### **10.1 Standard Development Commands**
+### **11.1 Standard Development Commands**
 ```bash
 # Development
 npm run dev              # Start dev server
@@ -737,7 +812,7 @@ npm run format           # Prettier format
 npm run typecheck        # TypeScript check
 ```
 
-### **10.2 MCP Server Commands (REQUIRED)**
+### **11.2 MCP Server Commands (REQUIRED)**
 
 #### **Supabase Operations**
 ```typescript
@@ -804,7 +879,7 @@ mcp__vercel__get_deployment_build_logs({ idOrUrl, teamId, limit: 100 })
 mcp__vercel__list_deployments({ projectId, teamId })
 ```
 
-### **10.3 Prohibited Direct Commands**
+### **11.3 Prohibited Direct Commands**
 ```bash
 # ❌ NEVER use these direct commands - use MCP servers instead
 

@@ -943,20 +943,20 @@ Response: { milestones: Milestone[] }
 *Updated: 2025-09-08*
 
 ### **Epic 1: Authentication & User Management**
-- [ ] **US-1.1:** User Registration - ⏳ Pending
-- [ ] **US-1.2:** User Login - ⏳ Pending  
-- [ ] **US-1.3:** Password Reset - ⏳ Pending
-- [ ] **US-1.4:** Session Management - ⏳ Pending
+- [x] **US-1.1:** User Registration - ✅ Completed (2025-09-10)
+- [x] **US-1.2:** User Login - ✅ Completed (2025-09-10)
+- [x] **US-1.3:** Password Reset - ✅ Completed (2025-09-10)
+- [x] **US-1.4:** Session Management - ✅ Completed (2025-09-10)
 
 ### **Epic 2: Weight Goals Management**
-- [ ] **US-2.1:** Create Weight Goal - ⏳ Pending
-- [ ] **US-2.2:** Update Active Goal - ⏳ Pending
-- [ ] **US-2.3:** View Goal History - ⏳ Pending
-- [ ] **US-2.4:** Delete Goals - ⏳ Pending
-- [ ] **US-2.5:** Goal Progress Display - ⏳ Pending
+- [x] **US-2.1:** Create Weight Goal - ✅ Completed (2025-09-11)
+- [x] **US-2.2:** Update Active Goal - ✅ Completed (2025-09-11)
+- [x] **US-2.3:** View Goal History - ✅ Completed (2025-09-11)
+- [x] **US-2.4:** Delete Goals - ✅ Completed (2025-09-11)
+- [🔄] **US-2.5:** Goal Progress Display - 🔄 Partially Complete (basic display elements)
 
 ### **Epic 3: Weight Data Entry**
-- [ ] **US-3.1:** Add Weight Entry - ⏳ Pending
+- [x] **US-3.1:** Add Weight Entry - ✅ Completed (2025-09-12) *See implementation notes below*
 - [ ] **US-3.2:** Edit Weight Entry - ⏳ Pending
 - [ ] **US-3.3:** Delete Weight Entry - ⏳ Pending
 - [ ] **US-3.4:** Entry Reminder - ⏳ Pending
@@ -986,7 +986,7 @@ Response: { milestones: Milestone[] }
 - [ ] **US-7.3:** Trend Analysis - ⏳ Pending
 
 ### **Epic 8: User Experience**
-- [ ] **US-8.1:** Dark/Light Mode - ⏳ Pending
+- [x] **US-8.1:** Dark/Light Mode - ✅ Completed (2025-09-10)
 - [ ] **US-8.2:** Welcome Screen - ⏳ Pending
 - [ ] **US-8.3:** Loading Skeletons - ⏳ Pending
 - [ ] **US-8.4:** Toast Notifications - ⏳ Pending
@@ -1054,3 +1054,35 @@ Response: { milestones: Milestone[] }
 28. Visual regression setup
 29. Performance optimization
 30. Security audit
+
+---
+
+## **10. Implementation Notes**
+
+### **US-3.1: Add Weight Entry Implementation Details**
+*Completed: 2025-09-12*
+
+**Key Implementation Decisions:**
+- **Averaging Logic:** Multiple entries per day are automatically averaged with visual indicator (asterisk *)
+- **Date Validation:** Fixed to allow "today" by using end-of-day comparison (23:59:59)
+- **Real-time Updates:** Implemented using Supabase subscriptions with fallback refresh mechanism
+- **Visual Feedback:** Added asterisk indicator with tooltip for averaged weights
+- **Fallback Pattern:** Used forwardRef and onSuccess callback for manual table refresh when real-time fails
+
+**Technical Details:**
+- Component uses forwardRef to expose `refreshEntries()` method
+- Real-time subscription enabled via `ALTER PUBLICATION supabase_realtime ADD TABLE weight_entries`
+- Date schema validation: `z.date().max(new Date(..., 23, 59, 59))` to include "today"
+- Averaging calculation: `Math.round(sum/count * 100) / 100` for precision
+- Visual indicator: `<span className="text-amber-600 ml-1" title="...">*</span>`
+
+**Lessons Learned:**
+- Always verify Supabase project ID early in development
+- Implement fallback mechanisms for real-time features
+- Use existing component exports rather than creating new instances
+- Provide visual feedback for data transformations
+
+---
+
+*Last Updated: 2025-09-12*  
+*Version: 2.1*

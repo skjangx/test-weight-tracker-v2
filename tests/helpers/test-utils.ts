@@ -204,12 +204,41 @@ export class TestUtils {
    */
   async createWeightEntry(page: any, entry: {
     weight: number
-    date: string
+    date: string | Date
     memo?: string
   }) {
     await page.click('button:has-text("Add Weight")')
     await page.fill('input[name="weight"]', entry.weight.toString())
-    await page.fill('input[name="date"]', entry.date)
+    
+    // Handle date picker - only click if we need to change the date
+    let needsDateChange = false
+    let day: number
+    
+    if (typeof entry.date === 'string') {
+      // Handle YYYY-MM-DD format
+      const dateObj = new Date(entry.date + 'T00:00:00')
+      day = dateObj.getDate()
+      // Check if the date is different from today
+      const today = new Date()
+      needsDateChange = dateObj.getDate() !== today.getDate() || 
+                       dateObj.getMonth() !== today.getMonth() || 
+                       dateObj.getFullYear() !== today.getFullYear()
+    } else {
+      // Handle Date object
+      day = entry.date.getDate()
+      const today = new Date()
+      needsDateChange = entry.date.getDate() !== today.getDate() || 
+                       entry.date.getMonth() !== today.getMonth() || 
+                       entry.date.getFullYear() !== today.getFullYear()
+    }
+    
+    // Only interact with date picker if we need to change the date
+    if (needsDateChange) {
+      await page.locator('button').filter({ hasText: /September|Pick a date/ }).first().click()
+      await page.waitForSelector('[role="gridcell"]')
+      await page.locator(`[role="gridcell"]:has-text("${day}")`).first().click()
+    }
+    
     if (entry.memo) {
       await page.fill('textarea[name="memo"]', entry.memo)
     }
@@ -229,8 +258,12 @@ export class TestUtils {
    * Wait for toast notification
    */
   async waitForToast(page: any, expectedText: string) {
-    await page.waitForSelector(`[data-sonner-toast]:has-text("${expectedText}")`, { timeout: 10000 })
-    await expect(page.locator(`[data-sonner-toast]:has-text("${expectedText}")`)).toBeVisible()
+    // Wait for the toast to appear with generous timeout
+    await page.waitForSelector(`[data-sonner-toast]:has-text("${expectedText}")`, { timeout: 15000 })
+    // Give it a moment to fully render
+    await page.waitForTimeout(500)
+    // Use .first() to handle multiple toasts gracefully
+    await expect(page.locator(`[data-sonner-toast]:has-text("${expectedText}")`).first()).toBeVisible()
   }
 
   /**

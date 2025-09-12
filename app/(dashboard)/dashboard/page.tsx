@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useAuth } from '@/lib/auth/context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,6 +8,8 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import { GoalCreationModal } from '@/components/goals/goal-creation-modal'
 import { ActiveGoalDisplay } from '@/components/goals/active-goal-display'
 import { GoalHistorySheet } from '@/components/goals/goal-history-sheet'
+import { AddWeightDialog } from '@/components/weight/add-weight-dialog'
+import { WeightEntriesTable, type WeightEntriesTableRef } from '@/components/weight/weight-entries-table'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
 import { LogOut, User, TrendingDown, History } from 'lucide-react'
 
@@ -15,6 +17,8 @@ export default function DashboardPage() {
   const { user, logout } = useAuth()
   const { stats, loading: statsLoading } = useDashboardStats()
   const [goalHistoryOpen, setGoalHistoryOpen] = useState(false)
+  const [addWeightOpen, setAddWeightOpen] = useState(false)
+  const weightEntriesTableRef = useRef<WeightEntriesTableRef>(null)
 
   const handleLogout = async () => {
     try {
@@ -102,7 +106,12 @@ export default function DashboardPage() {
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-4">
                 <GoalCreationModal />
-                <Button size="lg" variant="outline" className="flex-1">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setAddWeightOpen(true)}
+                >
                   Add Weight
                 </Button>
                 <Button 
@@ -117,12 +126,23 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Weight Entries Table */}
+          <div className="lg:col-span-3">
+            <WeightEntriesTable ref={weightEntriesTableRef} />
+          </div>
         </div>
       </main>
       
       <GoalHistorySheet 
         open={goalHistoryOpen}
         onOpenChange={setGoalHistoryOpen}
+      />
+      
+      <AddWeightDialog 
+        open={addWeightOpen}
+        onOpenChange={setAddWeightOpen}
+        onSuccess={() => weightEntriesTableRef.current?.refreshEntries()}
       />
     </div>
   )

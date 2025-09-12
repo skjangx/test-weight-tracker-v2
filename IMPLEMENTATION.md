@@ -196,15 +196,15 @@ CREATE TABLE weight_entries (
 ## **Implementation Tracking**
 
 ### **Phase 1 Progress**
-- [ ] Database schema created
-- [ ] Authentication system implemented
-- [ ] Core UI components set up
-- [ ] Testing infrastructure ready
+- [x] Database schema created
+- [x] Authentication system implemented
+- [x] Core UI components set up
+- [x] Testing infrastructure ready
 
 ### **Phase 2 Progress**
-- [ ] Weight goals management complete
-- [ ] Weight data entry functional
-- [ ] Data synchronization working
+- [x] Weight goals management complete
+- [x] Weight data entry functional (US-3.1 completed with averaging & real-time updates)
+- [🔄] Data synchronization working (partial - real-time subscriptions with fallback)
 
 ### **Phase 3 Progress**
 - [ ] Interactive graph implemented
@@ -216,6 +216,113 @@ CREATE TABLE weight_entries (
 - [ ] Performance optimized
 - [ ] Final testing passed
 - [ ] Documentation updated
+
+## **Implementation Patterns**
+
+### **ForwardRef Pattern for Component Method Exposure**
+```typescript
+// Use when parent needs to call child methods
+export interface WeightEntriesTableRef {
+  refreshEntries: () => void
+}
+
+export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref) => {
+  const fetchEntries = useCallback(async () => {
+    // fetch logic
+  }, [user])
+
+  useImperativeHandle(ref, () => ({
+    refreshEntries: fetchEntries
+  }))
+
+  return <Table>...</Table>
+})
+
+// Usage in parent
+const tableRef = useRef<WeightEntriesTableRef>(null)
+const handleSuccess = () => tableRef.current?.refreshEntries()
+```
+
+### **Fallback Refresh Pattern for Real-time Features**
+```typescript
+// Component with real-time + fallback
+interface Props {
+  onSuccess?: () => void  // Fallback callback
+}
+
+// In form submission
+const onSubmit = async () => {
+  // Save data
+  await saveData()
+  // Trigger fallback refresh if real-time fails
+  onSuccess?.()
+}
+
+// Parent provides fallback
+<AddWeightDialog 
+  onSuccess={() => tableRef.current?.refreshEntries()}
+/>
+```
+
+### **Date Validation Pattern**
+```typescript
+// Allow "today" by using end-of-day comparison
+const endOfToday = new Date(
+  new Date().getFullYear(), 
+  new Date().getMonth(), 
+  new Date().getDate(), 
+  23, 59, 59
+)
+
+const schema = z.object({
+  date: z.date().max(endOfToday, 'Cannot log weight for future dates')
+})
+```
+
+### **Data Processing with Visual Indicators**
+```typescript
+// Process data and show visual feedback
+const processedEntries = entries.map(group => ({
+  ...group,
+  weight: calculateAverage(group.weights),
+  isAveraged: group.weights.length > 1,
+  entryCount: group.weights.length
+}))
+
+// Display with indicator
+<TableCell>
+  {entry.weight}
+  {entry.isAveraged && (
+    <span className="text-amber-600 ml-1" title={`Average of ${entry.entryCount} entries`}>
+      *
+    </span>
+  )}
+</TableCell>
+```
+
+### **Real-time Subscription with Error Handling**
+```typescript
+// Enable publication first (database)
+// ALTER PUBLICATION supabase_realtime ADD TABLE weight_entries;
+
+// Component subscription
+useEffect(() => {
+  const channel = supabase
+    .channel('weight_entries_changes')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'weight_entries',
+      filter: `user_id=eq.${user.id}`
+    }, (payload) => {
+      console.log('Subscription triggered:', payload)
+      fetchEntries() // Refresh data
+    })
+    .subscribe()
+
+  return () => supabase.removeChannel(channel)
+}, [user, fetchEntries])
+```
 
 ## **Development Workflow**
 
@@ -251,5 +358,5 @@ CREATE TABLE weight_entries (
 
 ---
 
-*Last Updated: 2025-09-08*
-*Version: 1.0*
+*Last Updated: 2025-09-12*
+*Version: 1.1*
