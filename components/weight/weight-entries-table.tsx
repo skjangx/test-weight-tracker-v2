@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { TableSkeleton } from '@/components/skeletons/table-skeleton'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/auth/context'
 import { useActiveGoal } from '@/hooks/use-active-goal'
@@ -306,31 +307,15 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
 
   if (loading) {
     return (
-      <Card data-testid="weight-entries-table">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Skeleton className="h-6 w-32" />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Skeleton className="h-8 w-8" />
-              <Skeleton className="h-8 w-24" />
-              <Skeleton className="h-8 w-8" />
-            </div>
-          </div>
-          <Skeleton className="h-4 w-48 mt-2" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Skeleton className="h-16 w-full" />
-            <div className="space-y-2">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div data-testid="weight-entries-table">
+        <TableSkeleton 
+          title="Weight Entries" 
+          rows={5} 
+          columns={7} 
+          showHeader={true} 
+          showPagination={true} 
+        />
+      </div>
     )
   }
 

@@ -1,0 +1,96 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e6] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e7] [cursor=pointer]:
+      - img [ref=e8] [cursor=pointer]
+    - generic [ref=e11] [cursor=pointer]:
+      - button "Open issues overlay" [ref=e12] [cursor=pointer]:
+        - generic [ref=e13] [cursor=pointer]:
+          - generic [ref=e14] [cursor=pointer]: "0"
+          - generic [ref=e15] [cursor=pointer]: "1"
+        - generic [ref=e16] [cursor=pointer]: Issue
+      - button "Collapse issues badge" [ref=e17] [cursor=pointer]:
+        - img [ref=e18] [cursor=pointer]
+  - generic [ref=e20]:
+    - banner [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - heading "Weight Tracker" [level=1] [ref=e24]
+          - generic [ref=e25]: 🏋️‍♀️
+        - generic [ref=e26]:
+          - generic [ref=e27]:
+            - img [ref=e28]
+            - generic [ref=e31]: Welcome, !
+          - generic [ref=e32]:
+            - img [ref=e34]
+            - img [ref=e39]
+            - button [ref=e42]:
+              - img
+          - button "Toggle theme" [ref=e43]:
+            - img
+            - generic [ref=e44]: Toggle theme
+          - button "Logout" [ref=e45]:
+            - img
+            - generic [ref=e46]: Logout
+    - main [ref=e47]:
+      - generic [ref=e48]:
+        - generic [ref=e51]:
+          - img [ref=e52]
+          - generic [ref=e56]: Current Goal
+        - generic [ref=e61]:
+          - generic [ref=e63]:
+            - img [ref=e64]
+            - generic [ref=e67]: Quick Stats
+          - generic [ref=e69]:
+            - generic [ref=e70]:
+              - paragraph [ref=e71]: ...
+              - paragraph [ref=e72]: Weight Entries
+            - generic [ref=e73]:
+              - paragraph [ref=e74]: ...
+              - paragraph [ref=e75]: Active Goals
+            - generic [ref=e76]:
+              - paragraph [ref=e77]: ...
+              - paragraph [ref=e78]: Day Streak
+        - generic [ref=e79]:
+          - generic [ref=e80]:
+            - generic [ref=e81]: Quick Actions
+            - generic [ref=e82]: Start your weight tracking journey by setting a goal or logging your weight.
+          - generic [ref=e84]:
+            - button "Set Goal" [ref=e85]
+            - button "Add Weight" [ref=e86]
+            - button "Goal History" [ref=e87]:
+              - img
+              - text: Goal History
+        - generic [ref=e89]:
+          - generic [ref=e90]:
+            - generic [ref=e91]:
+              - img [ref=e92]
+              - generic [ref=e94]: Weekly Summary
+            - generic [ref=e95]: Your weekly progress will appear here
+          - paragraph [ref=e97]: Start logging weight entries to see your weekly summary
+        - generic [ref=e99]:
+          - generic [ref=e100]:
+            - generic [ref=e101]:
+              - img [ref=e102]
+              - generic [ref=e104]: Weight Trend
+            - generic [ref=e105]: Your weight progress will appear here once you start logging entries.
+          - generic [ref=e108]:
+            - img [ref=e109]
+            - paragraph [ref=e111]: No weight data available
+            - paragraph [ref=e112]: Start logging your weight to see trends
+        - generic [ref=e114]:
+          - generic [ref=e115]:
+            - generic [ref=e116]:
+              - img [ref=e117]
+              - generic [ref=e119]: Trend Analysis
+            - generic [ref=e120]: Your weight trends will appear here
+          - paragraph [ref=e122]: Keep logging weight entries to see your trends
+  - region "Notifications alt+T"
+  - generic [ref=e143]:
+    - img [ref=e145]
+    - button "Open Tanstack query devtools" [ref=e193] [cursor=pointer]:
+      - img [ref=e194] [cursor=pointer]
+  - alert [ref=e242]
+```

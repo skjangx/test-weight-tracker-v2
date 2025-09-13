@@ -7,6 +7,11 @@ export interface ChartDataPoint {
   weight: number
   movingAverage?: number
   isMilestone?: boolean
+  milestoneData?: {
+    kgLost: number
+    milestoneNumber: number
+    isNew: boolean
+  }
   change?: number
   changePercent?: number
 }
@@ -113,23 +118,53 @@ export function calculateMovingAverage(
  */
 export function calculateMilestones(
   data: ChartDataPoint[],
-  startingWeight?: number
+  startingWeight?: number,
+  previousMilestones: number[] = []
 ): ChartDataPoint[] {
   if (!startingWeight || data.length === 0) return data
 
-  return data.map(point => {
+  // Sort data by date to ensure proper milestone detection
+  const sortedData = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  const achievedMilestones = new Set(previousMilestones)
+
+  return sortedData.map((point, index) => {
     const weightLost = startingWeight - point.weight
-    const milestoneReached = Math.floor(weightLost / 3) // Every 3kg milestone
+    const milestoneNumber = Math.floor(weightLost / 3) // Every 3kg milestone
     
-    // Check if this is the first time reaching this milestone
-    const isNewMilestone = weightLost >= 3 && milestoneReached > 0 && 
-      (point.weight === Math.min(...data.map(d => d.weight)))
+    // Check if this is a milestone (3kg+ lost) and if it's new
+    const isMilestone = weightLost >= 3 && milestoneNumber > 0
+    const isNewMilestone = isMilestone && !achievedMilestones.has(milestoneNumber)
+    
+    // If it's a new milestone, mark it as achieved
+    if (isNewMilestone) {
+      achievedMilestones.add(milestoneNumber)
+    }
 
     return {
       ...point,
-      isMilestone: isNewMilestone
+      isMilestone: isMilestone,
+      milestoneData: isMilestone ? {
+        kgLost: weightLost,
+        milestoneNumber,
+        isNew: isNewMilestone
+      } : undefined
     }
   })
+}
+
+/**
+ * Get milestone celebration message
+ */
+export function getMilestoneMessage(milestoneNumber: number, kgLost: number): string {
+  const messages = [
+    `🎉 Congratulations! You've lost ${kgLost.toFixed(1)}kg!`,
+    `🌟 Amazing progress! ${kgLost.toFixed(1)}kg down!`,
+    `🚀 Fantastic work! You've achieved ${kgLost.toFixed(1)}kg weight loss!`,
+    `💪 Incredible! ${kgLost.toFixed(1)}kg milestone reached!`,
+    `🏆 Outstanding! You've lost ${kgLost.toFixed(1)}kg!`
+  ]
+  
+  return messages[milestoneNumber % messages.length] || messages[0]
 }
 
 /**

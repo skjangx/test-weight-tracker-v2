@@ -15,6 +15,7 @@ import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/auth/context'
+import { GoalHelpTooltip } from '@/components/help/help-tooltip'
 
 const goalSchema = z.object({
   targetWeight: z
@@ -134,7 +135,10 @@ export function GoalCreationModal({ onGoalCreated, trigger }: GoalCreationModalP
               name="targetWeight"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Target Weight (kg)</FormLabel>
+                  <FormLabel className="flex items-center space-x-2">
+                    <span>Target Weight (kg)</span>
+                    <GoalHelpTooltip />
+                  </FormLabel>
                   <FormControl>
                     <Input
                       type="number"

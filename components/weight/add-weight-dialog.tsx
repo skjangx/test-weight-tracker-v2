@@ -34,6 +34,7 @@ import {
 import { toast } from 'sonner'
 import { weightEntrySchema, type WeightEntryInput } from '@/lib/schemas/weight-entry'
 import { supabase } from '@/lib/supabase/client'
+import { WeightHelpTooltip } from '@/components/help/help-tooltip'
 
 interface AddWeightDialogProps {
   open: boolean
@@ -109,7 +110,10 @@ export function AddWeightDialog({ open, onOpenChange, onSuccess }: AddWeightDial
               name="weight"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Weight (kg)</FormLabel>
+                  <FormLabel className="flex items-center space-x-2">
+                    <span>Weight (kg)</span>
+                    <WeightHelpTooltip />
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Enter your weight"

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Target, Calendar, TrendingDown, Pencil, Flame, Trophy } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/auth/context'
 import { format, differenceInDays, subDays, parseISO } from 'date-fns'
@@ -164,15 +165,55 @@ export function ActiveGoalDisplay() {
     return (
       <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Target className="h-5 w-5 text-primary" />
-            <span>Current Goal</span>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Target className="h-5 w-5 text-primary" />
+              <span>Current Goal</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Skeleton className="h-8 w-8" />
+              <Skeleton className="h-6 w-16" />
+            </div>
           </CardTitle>
+          <CardDescription>
+            Your active weight goal and progress tracking
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-            <div className="h-4 bg-muted rounded w-1/2"></div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center space-x-3">
+                <Skeleton className="h-5 w-5" />
+                <div>
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-8 w-16" />
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Skeleton className="h-5 w-5" />
+                <div>
+                  <Skeleton className="h-4 w-20 mb-2" />
+                  <Skeleton className="h-6 w-32 mb-1" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center space-x-3">
+                  <Skeleton className="h-4 w-4" />
+                  <div>
+                    <Skeleton className="h-3 w-20 mb-1" />
+                    <Skeleton className="h-5 w-24" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="pt-4 border-t">
+              <Skeleton className="h-3 w-48" />
+            </div>
           </div>
         </CardContent>
       </Card>

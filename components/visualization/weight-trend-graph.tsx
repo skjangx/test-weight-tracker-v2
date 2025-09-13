@@ -17,8 +17,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ChartSkeleton } from '@/components/skeletons/chart-skeleton'
 import { useWeightData } from '@/hooks/use-weight-data'
 import { useActiveGoal } from '@/hooks/use-active-goal'
+import { useMilestoneCelebrations } from '@/hooks/use-milestone-celebrations'
 import {
   formatWeight,
   formatWeightChange,
@@ -28,6 +30,7 @@ import {
   type TimePeriod
 } from '@/lib/utils/chart-helpers'
 import { TrendingDown, TrendingUp, Minus, Target, Calendar } from 'lucide-react'
+import { MovingAverageHelpTooltip, MilestoneHelpTooltip } from '@/components/help/help-tooltip'
 
 interface CustomTooltipProps {
   active?: boolean
@@ -86,10 +89,10 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
           </>
         )}
         
-        {data.isMilestone && (
+        {data.isMilestone && data.milestoneData && (
           <div className="mt-2 pt-2 border-t border-border">
             <Badge variant="secondary" className="text-xs">
-              🎉 Milestone!
+              🎉 Milestone: {data.milestoneData.kgLost.toFixed(1)}kg lost!
             </Badge>
           </div>
         )}
@@ -162,6 +165,12 @@ export function WeightTrendGraph() {
 
   const { activeGoal } = useActiveGoal()
   
+  // Enable milestone celebrations
+  const { triggerCelebration } = useMilestoneCelebrations({ 
+    chartData, 
+    enabled: true 
+  })
+  
   // Chart dimensions and domain
   const chartDomain = useMemo(() => getChartDomain(chartData), [chartData])
   
@@ -195,19 +204,7 @@ export function WeightTrendGraph() {
   }
 
   if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5" />
-            <span>Weight Trend</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[300px] w-full" />
-        </CardContent>
-      </Card>
-    )
+    return <ChartSkeleton title="Weight Trend" showControls={true} height={300} />
   }
 
   if (error) {
@@ -292,17 +289,25 @@ export function WeightTrendGraph() {
         {/* Chart controls */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
-            <Button
-              variant={config.showMovingAverage ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setShowMovingAverage(!config.showMovingAverage)}
-            >
-              7-day average
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant={config.showMovingAverage ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowMovingAverage(!config.showMovingAverage)}
+              >
+                7-day average
+              </Button>
+              <MovingAverageHelpTooltip />
+            </div>
           </div>
           
-          <div className="text-xs text-muted-foreground">
-            {chartData.length} data points
+          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+            <span>{chartData.length} data points</span>
+            <span>•</span>
+            <div className="flex items-center space-x-1">
+              <span>🟢 = 3kg milestones</span>
+              <MilestoneHelpTooltip />
+            </div>
           </div>
         </div>
 

@@ -16,14 +16,22 @@ import { MilestoneTracker } from '@/components/effects/confetti-celebration'
 import { WeeklySummaryCard } from '@/components/progress/weekly-summary-card'
 import { TrendAnalysis } from '@/components/progress/trend-analysis'
 import { SyncStatusIndicator } from '@/components/sync/sync-status-indicator'
+import { WelcomeModal } from '@/components/welcome/welcome-modal'
+import { DashboardErrorBoundary, ChartErrorBoundary } from '@/components/error/error-boundary'
+import { HelpModal } from '@/components/help/help-modal'
+import { StreakHelpTooltip, SyncHelpTooltip } from '@/components/help/help-tooltip'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
 import { useWeightData } from '@/hooks/use-weight-data'
+import { useFirstVisit } from '@/hooks/use-first-visit'
+import { Skeleton } from '@/components/ui/skeleton'
 import { LogOut, User, TrendingDown, History } from 'lucide-react'
 
 export default function DashboardPage() {
   const { user, logout } = useAuth()
   const { stats, loading: statsLoading } = useDashboardStats()
   const { startingWeight, currentWeight } = useWeightData()
+  const { isFirstVisit, loading: firstVisitLoading, markWelcomeCompleted } = useFirstVisit()
   const [goalHistoryOpen, setGoalHistoryOpen] = useState(false)
   const [addWeightOpen, setAddWeightOpen] = useState(false)
   const weightEntriesTableRef = useRef<WeightEntriesTableRef>(null)
@@ -36,38 +44,54 @@ export default function DashboardPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-      {/* Header */}
-      <header className="border-b bg-background/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold">Weight Tracker</h1>
-            <span className="text-muted-foreground">🏋️‍♀️</span>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 text-sm">
-              <User className="h-4 w-4" />
-              <span>Welcome, {user?.email}!</span>
-            </div>
-            <SyncStatusIndicator compact />
-            <ThemeToggle />
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleLogout}
-              className="flex items-center space-x-2"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Logout</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+  const handleWelcomeGetStarted = () => {
+    markWelcomeCompleted()
+    // Optionally scroll to quick actions or open goal creation
+    document.getElementById('quick-actions')?.scrollIntoView({ behavior: 'smooth' })
+  }
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+  const handleWelcomeSkip = () => {
+    markWelcomeCompleted()
+  }
+
+  return (
+    <TooltipProvider>
+      <DashboardErrorBoundary>
+        <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
+        {/* Header */}
+        <header className="border-b bg-background/80 backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold">Weight Tracker</h1>
+              <span className="text-muted-foreground">🏋️‍♀️</span>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 text-sm">
+                <User className="h-4 w-4" />
+                <span>Welcome, {user?.email}!</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <SyncStatusIndicator compact />
+                <SyncHelpTooltip />
+              </div>
+              <HelpModal />
+              <ThemeToggle />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleLogout}
+                className="flex items-center space-x-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="container mx-auto px-4 py-8">
         {/* Entry Reminder Banner */}
         <EntryReminderBanner onQuickAddClick={() => setAddWeightOpen(true)} />
         
@@ -86,29 +110,38 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <p className="text-2xl font-bold">
-                    {statsLoading ? '...' : stats.weightEntries}
-                  </p>
+                  {statsLoading ? (
+                    <Skeleton className="h-8 w-12 mb-2" />
+                  ) : (
+                    <p className="text-2xl font-bold">{stats.weightEntries}</p>
+                  )}
                   <p className="text-sm text-muted-foreground">Weight Entries</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">
-                    {statsLoading ? '...' : stats.activeGoals}
-                  </p>
+                  {statsLoading ? (
+                    <Skeleton className="h-8 w-8 mb-2" />
+                  ) : (
+                    <p className="text-2xl font-bold">{stats.activeGoals}</p>
+                  )}
                   <p className="text-sm text-muted-foreground">Active Goals</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">
-                    {statsLoading ? '...' : stats.dayStreak}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Day Streak</p>
+                  {statsLoading ? (
+                    <Skeleton className="h-8 w-12 mb-2" />
+                  ) : (
+                    <p className="text-2xl font-bold">{stats.dayStreak}</p>
+                  )}
+                  <div className="flex items-center space-x-1">
+                    <p className="text-sm text-muted-foreground">Day Streak</p>
+                    <StreakHelpTooltip />
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Quick Actions Card */}
-          <Card className="lg:col-span-3">
+          <Card id="quick-actions" className="lg:col-span-3">
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
               <CardDescription>
@@ -146,7 +179,9 @@ export default function DashboardPage() {
 
           {/* Weight Trend Graph */}
           <div className="lg:col-span-3">
-            <WeightTrendGraph />
+            <ChartErrorBoundary>
+              <WeightTrendGraph />
+            </ChartErrorBoundary>
           </div>
 
           {/* Trend Analysis */}
@@ -177,6 +212,15 @@ export default function DashboardPage() {
         startingWeight={startingWeight}
         currentWeight={currentWeight}
       />
-    </div>
+      
+      {/* Welcome Modal */}
+      <WelcomeModal
+        open={!firstVisitLoading && isFirstVisit === true}
+        onGetStarted={handleWelcomeGetStarted}
+        onSkip={handleWelcomeSkip}
+      />
+      </div>
+    </DashboardErrorBoundary>
+    </TooltipProvider>
   )
 }
