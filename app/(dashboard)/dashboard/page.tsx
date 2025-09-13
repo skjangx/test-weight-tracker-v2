@@ -13,6 +13,9 @@ import { WeightEntriesTable, type WeightEntriesTableRef } from '@/components/wei
 import { EntryReminderBanner } from '@/components/dashboard/entry-reminder-banner'
 import { WeightTrendGraph } from '@/components/visualization/weight-trend-graph'
 import { MilestoneTracker } from '@/components/effects/confetti-celebration'
+import { WeeklySummaryCard } from '@/components/progress/weekly-summary-card'
+import { TrendAnalysis } from '@/components/progress/trend-analysis'
+import { SyncStatusIndicator } from '@/components/sync/sync-status-indicator'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
 import { useWeightData } from '@/hooks/use-weight-data'
 import { LogOut, User, TrendingDown, History } from 'lucide-react'
@@ -48,6 +51,7 @@ export default function DashboardPage() {
               <User className="h-4 w-4" />
               <span>Welcome, {user?.email}!</span>
             </div>
+            <SyncStatusIndicator compact />
             <ThemeToggle />
             <Button 
               variant="outline" 
@@ -135,9 +139,19 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
+          {/* Weekly Summary Card */}
+          <div className="lg:col-span-3">
+            <WeeklySummaryCard />
+          </div>
+
           {/* Weight Trend Graph */}
           <div className="lg:col-span-3">
             <WeightTrendGraph />
+          </div>
+
+          {/* Trend Analysis */}
+          <div className="lg:col-span-3">
+            <TrendAnalysis />
           </div>
 
           {/* Weight Entries Table */}

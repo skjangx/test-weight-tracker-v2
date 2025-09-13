@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { QueryProvider } from "@/components/providers/query-provider"
 import { AuthProvider } from "@/lib/auth/context"
+import { SyncProvider } from "@/lib/sync/context"
 import { Toaster } from "@/components/ui/sonner"
 import "./globals.css";
 
@@ -39,8 +40,10 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <AuthProvider>
-              {children}
-              <Toaster />
+              <SyncProvider>
+                {children}
+                <Toaster />
+              </SyncProvider>
             </AuthProvider>
           </ThemeProvider>
         </QueryProvider>
