@@ -34,7 +34,7 @@ import {
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/auth/context'
-import { toast } from 'sonner'
+import { showSuccessToast, showErrorToast, ToastMessages } from '@/lib/utils/toast'
 
 interface Goal {
   id: string
@@ -115,12 +115,12 @@ export function GoalUpdateModal({ goal, open, onOpenChange }: GoalUpdateModalPro
         // Rollback optimistic update
         window.dispatchEvent(new CustomEvent('goalUpdated', { detail: goal }))
         console.error('Error updating goal:', error)
-        toast.error('Failed to update goal. Please try again.')
+        showErrorToast(ToastMessages.general.saveError)
         return
       }
 
       // Success
-      toast.success('Goal updated successfully')
+      showSuccessToast(ToastMessages.goals.updateSuccess)
       onOpenChange(false)
       
       // Trigger refreshes
@@ -129,7 +129,7 @@ export function GoalUpdateModal({ goal, open, onOpenChange }: GoalUpdateModalPro
 
     } catch (error) {
       console.error('Error updating goal:', error)
-      toast.error('Failed to update goal. Please try again.')
+      showErrorToast(ToastMessages.general.saveError)
     } finally {
       setIsLoading(false)
     }

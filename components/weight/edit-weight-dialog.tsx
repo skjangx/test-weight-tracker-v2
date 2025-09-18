@@ -41,7 +41,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { toast } from 'sonner'
+import { showSuccessToast, showErrorToast, ToastMessages } from '@/lib/utils/toast'
 import { weightEntrySchema, type WeightEntryInput } from '@/lib/schemas/weight-entry'
 import { supabase } from '@/lib/supabase/client'
 import type { WeightEntry } from '@/lib/schemas/weight-entry'
@@ -91,7 +91,7 @@ export function EditWeightDialog({ open, onOpenChange, entry, onSuccess }: EditW
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        toast.error('Please log in to update weight entries')
+        showErrorToast('Please log in to update weight entries')
         return
       }
 
@@ -107,19 +107,11 @@ export function EditWeightDialog({ open, onOpenChange, entry, onSuccess }: EditW
 
       if (error) {
         console.error('Error updating weight entry:', error)
-        toast.error('Failed to update entry. Please try again.')
+        showErrorToast(ToastMessages.general.saveError)
         return
       }
 
-      toast.success('Weight entry updated', {
-        action: {
-          label: 'Undo',
-          onClick: () => {
-            // TODO: Implement undo functionality
-            console.log('Undo clicked')
-          }
-        }
-      })
+      showSuccessToast(ToastMessages.weight.editSuccess)
       
       // Dispatch event to notify other components
       window.dispatchEvent(new CustomEvent('weightEntryUpdated'))
@@ -128,7 +120,7 @@ export function EditWeightDialog({ open, onOpenChange, entry, onSuccess }: EditW
       onOpenChange(false)
     } catch (error) {
       console.error('Error:', error)
-      toast.error('Failed to update entry. Please try again.')
+      showErrorToast(ToastMessages.general.saveError)
     } finally {
       setIsLoading(false)
     }
@@ -141,7 +133,7 @@ export function EditWeightDialog({ open, onOpenChange, entry, onSuccess }: EditW
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        toast.error('Please log in to delete weight entries')
+        showErrorToast('Please log in to delete weight entries')
         return
       }
 
@@ -153,11 +145,11 @@ export function EditWeightDialog({ open, onOpenChange, entry, onSuccess }: EditW
 
       if (error) {
         console.error('Error deleting weight entry:', error)
-        toast.error('Failed to delete entry. Please try again.')
+        showErrorToast(ToastMessages.general.saveError)
         return
       }
 
-      toast.success('Weight entry deleted')
+      showSuccessToast(ToastMessages.weight.deleteSuccess)
       
       // Dispatch event to notify other components
       window.dispatchEvent(new CustomEvent('weightEntryUpdated'))

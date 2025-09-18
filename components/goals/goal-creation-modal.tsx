@@ -12,7 +12,7 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
-import { toast } from 'sonner'
+import { showSuccessToast, showErrorToast, ToastMessages } from '@/lib/utils/toast'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/auth/context'
 import { GoalHelpTooltip } from '@/components/help/help-tooltip'
@@ -50,7 +50,7 @@ export function GoalCreationModal({ onGoalCreated, trigger }: GoalCreationModalP
 
   const onSubmit = async (data: GoalFormData) => {
     if (!user) {
-      toast.error('You must be logged in to create a goal')
+      showErrorToast('You must be logged in to create a goal')
       return
     }
 
@@ -91,7 +91,7 @@ export function GoalCreationModal({ onGoalCreated, trigger }: GoalCreationModalP
       }
 
       console.log('Goal created successfully:', insertedGoal)
-      toast.success('Goal created successfully')
+      showSuccessToast(ToastMessages.goals.createSuccess)
       setOpen(false)
       form.reset()
       
@@ -103,7 +103,7 @@ export function GoalCreationModal({ onGoalCreated, trigger }: GoalCreationModalP
       window.dispatchEvent(new CustomEvent('statsRefresh', { detail: insertedGoal }))
     } catch (error) {
       console.error('Error creating goal:', error)
-      toast.error('Failed to create goal. Please try again.')
+      showErrorToast(ToastMessages.general.saveError)
     } finally {
       setIsLoading(false)
     }

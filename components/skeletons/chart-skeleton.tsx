@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useEffect, useState } from 'react'
 
 interface ChartSkeletonProps {
   title?: string
@@ -12,6 +13,15 @@ export function ChartSkeleton({
   showControls = true,
   height = 256 
 }: ChartSkeletonProps) {
+  const [isClient, setIsClient] = useState(false)
+  const [barHeights, setBarHeights] = useState<number[]>([])
+
+  // Prevent hydration mismatch by generating random heights only on client
+  useEffect(() => {
+    setIsClient(true)
+    setBarHeights(Array.from({ length: 8 }, () => Math.random() * 60 + 20))
+  }, [])
+
   return (
     <Card>
       <CardHeader>
@@ -38,16 +48,24 @@ export function ChartSkeleton({
             
             {/* Optional: Add some fake chart elements */}
             <div className="absolute inset-4 flex items-end justify-between opacity-20">
-              {Array.from({ length: 8 }).map((_, i) => {
-                const height = Math.random() * 60 + 20
-                return (
+              {isClient ? (
+                barHeights.map((height, i) => (
                   <Skeleton 
                     key={i} 
                     className="w-4 bg-primary/30"
                     style={{ height: `${height}%` }}
                   />
-                )
-              })}
+                ))
+              ) : (
+                // Static heights for SSR to prevent hydration mismatch
+                Array.from({ length: 8 }).map((_, i) => (
+                  <Skeleton 
+                    key={i} 
+                    className="w-4 bg-primary/30"
+                    style={{ height: `${40 + (i * 5)}%` }} // Static, predictable heights
+                  />
+                ))
+              )}
             </div>
           </div>
           

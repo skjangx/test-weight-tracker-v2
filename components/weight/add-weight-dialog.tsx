@@ -31,7 +31,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { toast } from 'sonner'
+import { showSuccessToast, showErrorToast, ToastMessages } from '@/lib/utils/toast'
 import { weightEntrySchema, type WeightEntryInput } from '@/lib/schemas/weight-entry'
 import { supabase } from '@/lib/supabase/client'
 import { WeightHelpTooltip } from '@/components/help/help-tooltip'
@@ -59,9 +59,17 @@ export function AddWeightDialog({ open, onOpenChange, onSuccess }: AddWeightDial
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        toast.error('Please log in to save weight entries')
+        showErrorToast('Please log in to save weight entries')
         return
       }
+
+      // Check if entry for this date already exists
+      const { data: existingEntry } = await supabase
+        .from('weight_entries')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('date', format(data.date, 'yyyy-MM-dd'))
+        .single()
 
       const { error } = await supabase
         .from('weight_entries')
@@ -74,11 +82,15 @@ export function AddWeightDialog({ open, onOpenChange, onSuccess }: AddWeightDial
 
       if (error) {
         console.error('Error saving weight entry:', error)
-        toast.error('Failed to save entry. Please try again.')
+        showErrorToast(ToastMessages.general.saveError)
         return
       }
 
-      toast.success('Weight entry saved')
+      if (existingEntry) {
+        showSuccessToast(ToastMessages.weight.addSuccess, ToastMessages.weight.duplicateDate)
+      } else {
+        showSuccessToast(ToastMessages.weight.addSuccess)
+      }
       
       // Dispatch event to notify other components
       window.dispatchEvent(new CustomEvent('weightEntryCreated'))
@@ -88,7 +100,7 @@ export function AddWeightDialog({ open, onOpenChange, onSuccess }: AddWeightDial
       onOpenChange(false)
     } catch (error) {
       console.error('Error:', error)
-      toast.error('Failed to save entry. Please try again.')
+      showErrorToast(ToastMessages.general.saveError)
     } finally {
       setIsLoading(false)
     }

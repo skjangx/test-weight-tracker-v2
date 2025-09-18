@@ -20,7 +20,8 @@ import { useAuth } from '@/lib/auth/context'
 import { useActiveGoal } from '@/hooks/use-active-goal'
 import type { WeightEntry } from '@/lib/schemas/weight-entry'
 import { EditWeightDialog } from './edit-weight-dialog'
-import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Calendar, Trophy, Target, Zap, Frown } from 'lucide-react'
+import { AddWeightDialog } from './add-weight-dialog'
+import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Calendar, Trophy, Target, Zap, Frown, Plus } from 'lucide-react'
 
 export interface WeightEntriesTableRef {
   refreshEntries: () => void
@@ -412,34 +413,45 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
   return (
     <Card data-testid="weight-entries-table">
       <CardHeader>
-        {/* Month Navigation Header */}
+        {/* Header with Add Weight Button */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Calendar className="h-5 w-5" />
             <CardTitle>Weight Entries</CardTitle>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handlePreviousMonth}
-              data-testid="previous-month"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <div className="min-w-[140px] text-center" data-testid="current-month">
-              <span className="font-medium">{format(currentMonth, 'MMMM yyyy')}</span>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleNextMonth}
-              disabled={isCurrentMonth()}
-              data-testid="next-month"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+          <AddWeightDialog
+            onSuccess={fetchEntries}
+            trigger={
+              <Button size="sm" data-testid="add-weight-from-table">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Weight Entry
+              </Button>
+            }
+          />
+        </div>
+
+        {/* Month Navigation */}
+        <div className="flex items-center justify-center space-x-2 pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePreviousMonth}
+            data-testid="previous-month"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="min-w-[140px] text-center" data-testid="current-month">
+            <span className="font-medium">{format(currentMonth, 'MMMM yyyy')}</span>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNextMonth}
+            disabled={isCurrentMonth()}
+            data-testid="next-month"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
         
         <CardDescription>
