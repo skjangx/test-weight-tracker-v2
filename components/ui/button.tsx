@@ -40,6 +40,7 @@ function Button({
   variant,
   size,
   asChild = false,
+  disabled,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
@@ -47,13 +48,19 @@ function Button({
   }) {
   const Comp = asChild ? Slot : "button"
 
-  return (
-    <Comp
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
-  )
+  // Build props object without disabled if it's false/undefined to prevent hydration mismatch
+  const buttonProps: any = {
+    "data-slot": "button",
+    className: cn(buttonVariants({ variant, size, className })),
+    ...props
+  }
+
+  // Only add disabled attribute if it's explicitly true
+  if (disabled === true) {
+    buttonProps.disabled = true
+  }
+
+  return <Comp {...buttonProps} />
 }
 
 export { Button, buttonVariants }
