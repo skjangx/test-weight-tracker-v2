@@ -209,7 +209,7 @@ export function HelpModal() {
             <span>Weight Tracker Help</span>
           </DialogTitle>
           <DialogDescription id="help-description" className="text-base">
-            Everything you need to know about tracking your weight effectively
+            Everything you need to know about tracking your weight effectively. Navigate through topics using the buttons below, or use Tab and Arrow keys for keyboard navigation.
           </DialogDescription>
         </DialogHeader>
 
@@ -282,7 +282,7 @@ export function HelpModal() {
                   {currentSection.content.map((item, index) => (
                     <div key={index} className="space-y-4">
                       <div className="space-y-2">
-                        <h3 className="text-xl font-semibold text-foreground">{item.subtitle}</h3>
+                        <h3 className="text-2xl font-semibold text-foreground">{item.subtitle}</h3>
                         <p className="text-base leading-relaxed text-muted-foreground">{item.text}</p>
                       </div>
 
