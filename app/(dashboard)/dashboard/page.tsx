@@ -75,56 +75,55 @@ export default function DashboardPage() {
     <TooltipProvider>
       <DashboardErrorBoundary>
         <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
-        {/* Header */}
+        {/* Optimized Header */}
         <FadeIn>
-          <header className="border-b bg-background/80 backdrop-blur-sm">
-            <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container flex h-16 items-center justify-between px-4">
               <SlideIn direction="left" delay={100}>
-                <div className="flex items-center space-x-4">
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                     Weight Tracker
                   </h1>
-                  <span className="text-muted-foreground animate-bounce">🏋️‍♀️</span>
+                  <span className="text-lg">🏋️‍♀️</span>
                 </div>
               </SlideIn>
 
               <SlideIn direction="right" delay={200}>
-                <div className="flex items-center space-x-3">
-                  {/* User Welcome - Hide on mobile */}
+                <div className="flex items-center gap-2">
+                  {/* User Welcome - Responsive visibility */}
                   <FadeIn delay={300}>
-                    <div className="hidden md:flex items-center space-x-2 text-sm">
+                    <div className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground mr-2">
                       <User className="h-4 w-4" />
                       <span>Welcome, {user?.email?.split('@')[0]}!</span>
                     </div>
                   </FadeIn>
 
-                  {/* Primary Actions Group */}
-                  <div className="flex items-center space-x-2">
-                    <FadeIn delay={350}>
-                      <AddWeightDialog
-                        onSuccess={() => weightEntriesTableRef.current?.refreshEntries()}
-                        trigger={
-                          <AnimatedButton
-                            size="sm"
-                            className="flex items-center space-x-1"
-                            hoverScale
-                            pressEffect
-                            data-testid="add-weight-header"
-                          >
-                            <Plus className="h-4 w-4" />
-                            <span className="hidden sm:inline">Add Weight</span>
-                          </AnimatedButton>
-                        }
-                      />
-                    </FadeIn>
+                  {/* Primary Action */}
+                  <FadeIn delay={350}>
+                    <AddWeightDialog
+                      onSuccess={() => weightEntriesTableRef.current?.refreshEntries()}
+                      trigger={
+                        <AnimatedButton
+                          size="sm"
+                          className="flex items-center gap-1.5"
+                          hoverScale
+                          pressEffect
+                          data-testid="add-weight-header"
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span className="hidden sm:inline">Add Weight</span>
+                        </AnimatedButton>
+                      }
+                    />
+                  </FadeIn>
 
-                    <FadeIn delay={400}>
-                      <SyncStatusIndicator compact />
-                    </FadeIn>
-                  </div>
+                  {/* Sync Status */}
+                  <FadeIn delay={400}>
+                    <SyncStatusIndicator compact />
+                  </FadeIn>
 
-                  {/* Secondary Actions Group */}
-                  <div className="flex items-center space-x-1">
+                  {/* Secondary Actions - Grouped */}
+                  <div className="flex items-center gap-1 ml-2">
                     <FadeIn delay={450}>
                       <HelpModal />
                     </FadeIn>
@@ -133,15 +132,15 @@ export default function DashboardPage() {
                     </FadeIn>
                     <FadeIn delay={550}>
                       <AnimatedButton
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={handleLogout}
-                        className="flex items-center space-x-2"
+                        className="flex items-center gap-1.5"
                         hoverScale
                         pressEffect
                       >
                         <LogOut className="h-4 w-4" />
-                        <span className="hidden sm:inline">Logout</span>
+                        <span className="hidden md:inline">Logout</span>
                       </AnimatedButton>
                     </FadeIn>
                   </div>
@@ -158,10 +157,10 @@ export default function DashboardPage() {
           <EntryReminderBanner onQuickAddClick={() => setAddWeightOpen(true)} />
         </FadeIn>
 
-        {/* New 12-Column Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-8 xl:grid-cols-12 gap-6">
-          {/* Left Column - Goal & Progress Section */}
-          <div className="md:col-span-8 xl:col-span-4 space-y-6">
+        {/* Balanced Grid Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column - Goals & Progress (5/12 = 42%) */}
+          <div className="lg:col-span-5 space-y-6">
             {/* Active Goal Display */}
             <SlideIn delay={300} direction="up">
               <ActiveGoalDisplay />
@@ -178,8 +177,8 @@ export default function DashboardPage() {
             </SlideIn>
           </div>
 
-          {/* Right Column - Data & Visualization */}
-          <div className="md:col-span-8 xl:col-span-8 space-y-6">
+          {/* Right Column - Data & Visualization (7/12 = 58%) */}
+          <div className="lg:col-span-7 space-y-6">
             {/* Weight Trend Graph */}
             <SlideIn delay={450} direction="up">
               <ChartErrorBoundary>
