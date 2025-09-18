@@ -168,115 +168,143 @@ const helpSections: HelpSection[] = [
 
 export function HelpModal() {
   const [selectedSection, setSelectedSection] = useState<string>('getting-started')
+  const [isOpen, setIsOpen] = useState(false)
 
   const currentSection = helpSections.find(section => section.id === selectedSection)
 
+  // Handle keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setIsOpen(false)
+    }
+  }
+
+  // Handle section selection with keyboard
+  const handleSectionSelect = (sectionId: string) => {
+    setSelectedSection(sectionId)
+  }
+
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center space-x-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex items-center gap-1.5 hover:bg-primary/10 focus:bg-primary/10 focus:ring-2 focus:ring-primary/20"
+          aria-label="Open help documentation"
+          aria-expanded={isOpen}
+        >
           <HelpCircle className="h-4 w-4" />
           <span className="hidden sm:inline">Help</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <HelpCircle className="h-5 w-5" />
+      <DialogContent
+        className="max-w-4xl max-h-[95vh] p-0 overflow-hidden"
+        onKeyDown={handleKeyDown}
+        aria-describedby="help-description"
+      >
+        <DialogHeader className="p-6 pb-4 border-b">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <HelpCircle className="h-5 w-5 text-primary" />
             <span>Weight Tracker Help</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="help-description" className="text-base">
             Everything you need to know about tracking your weight effectively
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="flex flex-col md:flex-row gap-6 mt-6 overflow-hidden">
-          {/* Help Navigation */}
-          <div className="md:w-1/3 space-y-2">
-            <h3 className="font-semibold text-sm text-muted-foreground mb-3">Topics</h3>
-            {helpSections.map((section) => {
-              const Icon = section.icon
-              return (
-                <Button
-                  key={section.id}
-                  variant={selectedSection === section.id ? "default" : "ghost"}
-                  className="w-full justify-start text-left h-auto p-3"
-                  onClick={() => setSelectedSection(section.id)}
-                >
-                  <Icon className="h-4 w-4 mr-3 shrink-0" />
-                  <div>
-                    <div className="font-medium">{section.title}</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {section.description}
-                    </div>
-                  </div>
-                </Button>
-              )
-            })}
+
+        <div className="flex flex-col lg:flex-row overflow-hidden">
+          {/* Mobile-First Navigation */}
+          <div className="lg:w-80 border-r bg-muted/30">
+            <div className="p-4">
+              <h3 className="font-semibold text-sm text-muted-foreground mb-3 uppercase tracking-wide">
+                Topics
+              </h3>
+              <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible">
+                {helpSections.map((section) => {
+                  const Icon = section.icon
+                  const isSelected = selectedSection === section.id
+                  return (
+                    <Button
+                      key={section.id}
+                      variant={isSelected ? "default" : "ghost"}
+                      size="lg"
+                      className={`
+                        w-full lg:w-auto whitespace-nowrap lg:whitespace-normal lg:justify-start text-left h-auto p-4 min-h-[44px]
+                        ${isSelected
+                          ? "bg-primary text-primary-foreground shadow-md"
+                          : "hover:bg-muted focus:bg-muted"
+                        }
+                      `}
+                      onClick={() => handleSectionSelect(section.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          handleSectionSelect(section.id)
+                        }
+                      }}
+                      aria-selected={isSelected}
+                      role="tab"
+                    >
+                      <Icon className="h-5 w-5 lg:mr-3 shrink-0" />
+                      <div className="hidden lg:block">
+                        <div className="font-semibold text-sm">{section.title}</div>
+                        <div className={`text-xs mt-1 ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                          {section.description}
+                        </div>
+                      </div>
+                    </Button>
+                  )
+                })}
+              </div>
+            </div>
           </div>
 
-          {/* Help Content */}
-          <div className="md:w-2/3 overflow-y-auto">
+          {/* Enhanced Content Area */}
+          <div className="flex-1 overflow-y-auto" role="tabpanel">
             {currentSection && (
-              <div className="space-y-6">
-                <div className="flex items-start space-x-3">
-                  <currentSection.icon className="h-6 w-6 text-primary mt-1" />
-                  <div>
-                    <h2 className="text-xl font-semibold">{currentSection.title}</h2>
-                    <p className="text-muted-foreground">{currentSection.description}</p>
+              <div className="p-6 space-y-8">
+                {/* Section Header */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <currentSection.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold tracking-tight">{currentSection.title}</h2>
+                      <p className="text-muted-foreground text-lg">{currentSection.description}</p>
+                    </div>
                   </div>
                 </div>
 
-                <Separator />
-
-                <div className="space-y-6">
+                {/* Content Sections */}
+                <div className="space-y-8">
                   {currentSection.content.map((item, index) => (
-                    <Card key={index}>
-                      <CardHeader>
-                        <CardTitle className="text-lg">{item.subtitle}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <p className="text-sm leading-relaxed">{item.text}</p>
-                        
-                        {item.tips && (
-                          <div>
-                            <div className="flex items-center space-x-2 mb-3">
-                              <Info className="h-4 w-4 text-blue-500" />
-                              <Badge variant="secondary" className="text-xs">
-                                Pro Tips
-                              </Badge>
-                            </div>
-                            <ul className="space-y-2">
-                              {item.tips.map((tip, tipIndex) => (
-                                <li key={tipIndex} className="text-sm flex items-start space-x-2">
-                                  <span className="text-primary mt-1">•</span>
-                                  <span>{tip}</span>
-                                </li>
-                              ))}
-                            </ul>
+                    <div key={index} className="space-y-4">
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-semibold text-foreground">{item.subtitle}</h3>
+                        <p className="text-base leading-relaxed text-muted-foreground">{item.text}</p>
+                      </div>
+
+                      {item.tips && (
+                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <span className="font-semibold text-blue-800 dark:text-blue-200">Pro Tips</span>
                           </div>
-                        )}
-                      </CardContent>
-                    </Card>
+                          <ul className="space-y-2">
+                            {item.tips.map((tip, tipIndex) => (
+                              <li key={tipIndex} className="flex items-start gap-2 text-sm text-blue-700 dark:text-blue-300">
+                                <span className="text-blue-500 mt-1">•</span>
+                                <span>{tip}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
-
-                {/* Quick Tips Card */}
-                <Card className="bg-gradient-to-r from-primary/5 to-blue-50 dark:to-blue-950/20 border-primary/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2 text-primary">
-                      <Trophy className="h-5 w-5" />
-                      <span>Remember</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm leading-relaxed">
-                      Weight loss is a journey, not a race. Small, consistent changes compound over time. 
-                      Focus on building sustainable habits rather than seeking quick fixes. 
-                      Your health and well-being are more important than any number on a scale.
-                    </p>
-                  </CardContent>
-                </Card>
               </div>
             )}
           </div>
@@ -285,3 +313,4 @@ export function HelpModal() {
     </Dialog>
   )
 }
+
