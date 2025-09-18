@@ -1,8 +1,9 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
+import { showSuccessToast, showErrorToast, ToastMessages } from '@/lib/utils/toast'
+import { useAuthPerformance } from '@/hooks/use-performance'
 import type { User, AuthSession, LoginCredentials, RegisterData, ResetPasswordData } from './types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const { trackLogin, trackRegister, trackLogout } = useAuthPerformance()
 
   // Function to create user profile from Supabase user (temporarily simplified)
   const getUserProfile = async (supabaseUser: SupabaseUser): Promise<User> => {
@@ -79,63 +81,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Auth actions
   const login = async (credentials: LoginCredentials): Promise<void> => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: credentials.email,
-      password: credentials.password
-    })
+    const endTracking = trackLogin()
 
-    if (error) {
-      toast.error('Login failed', {
-        description: error.message
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password
       })
-      throw error
-    }
 
-    toast.success('Welcome back!', {
-      description: `Last synced: ${new Date().toLocaleTimeString()}`
-    })
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          showErrorToast(ToastMessages.auth.loginError)
+        } else {
+          showErrorToast('Login failed', error.message)
+        }
+        throw error
+      }
+
+      showSuccessToast('Welcome back!', `Last synced: ${new Date().toLocaleTimeString()}`)
+    } finally {
+      endTracking()
+    }
   }
 
   const register = async (data: RegisterData): Promise<void> => {
-    const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`
-      }
-    })
+    const endTracking = trackRegister()
 
-    if (error) {
-      toast.error('Registration failed', {
-        description: error.message
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`
+        }
       })
-      throw error
-    }
 
-    toast.success('Account created successfully!', {
-      description: 'Welcome to Weight Tracker!'
-    })
+      if (error) {
+        showErrorToast('Registration failed', error.message)
+        throw error
+      }
+
+      showSuccessToast(ToastMessages.auth.registerSuccess, 'Welcome to Weight Tracker!')
+    } finally {
+      endTracking()
+    }
   }
 
   const logout = async (): Promise<void> => {
-    const { error } = await supabase.auth.signOut()
+    const endTracking = trackLogout()
 
-    if (error) {
-      toast.error('Logout failed', {
-        description: error.message
-      })
-      throw error
+    try {
+      const { error } = await supabase.auth.signOut()
+
+      if (error) {
+        showErrorToast('Logout failed', error.message)
+        throw error
+      }
+
+      // Clear local session immediately
+      setSession(null)
+
+      showSuccessToast(ToastMessages.auth.logoutSuccess)
+
+      // Redirect to login page after a brief delay to show the toast
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 1000)
+    } finally {
+      endTracking()
     }
-
-    // Clear local session immediately
-    setSession(null)
-    
-    toast.success('Logged out successfully')
-    
-    // Redirect to login page after a brief delay to show the toast
-    setTimeout(() => {
-      window.location.href = '/login'
-    }, 1000)
   }
 
   const resetPassword = async (data: ResetPasswordData): Promise<void> => {
@@ -144,15 +158,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     if (error) {
-      toast.error('Password reset failed', {
-        description: error.message
-      })
+      showErrorToast('Password reset failed', error.message)
       throw error
     }
 
-    toast.success('Password reset email sent', {
-      description: 'Check your email for reset instructions'
-    })
+    showSuccessToast(ToastMessages.auth.passwordResetSent, 'Check your email for reset instructions')
   }
 
   const value: AuthContextType = {

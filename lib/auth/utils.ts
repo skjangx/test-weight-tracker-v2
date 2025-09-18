@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/client'
 import type { User, Session } from './types'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-key'

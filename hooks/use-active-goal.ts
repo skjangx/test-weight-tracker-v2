@@ -40,13 +40,12 @@ export function useActiveGoal(): UseActiveGoalResult {
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single()
 
-      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (fetchError) {
         throw fetchError
       }
 
-      setActiveGoal(data || null)
+      setActiveGoal(data && data.length > 0 ? data[0] : null)
     } catch (err) {
       console.error('Error fetching active goal:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch active goal')
