@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/lib/auth/context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,6 +15,7 @@ import { WeightTrendGraph } from '@/components/visualization/weight-trend-graph'
 import { MilestoneTracker } from '@/components/effects/confetti-celebration'
 import { WeeklySummaryCard } from '@/components/progress/weekly-summary-card'
 import { TrendAnalysis } from '@/components/progress/trend-analysis'
+import { ThisWeekProgress } from '@/components/progress/this-week-progress'
 import { SyncStatusIndicator } from '@/components/sync/sync-status-indicator'
 import { WelcomeModal } from '@/components/welcome/welcome-modal'
 import { DashboardErrorBoundary, ChartErrorBoundary } from '@/components/error/error-boundary'
@@ -24,17 +25,33 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
 import { useWeightData } from '@/hooks/use-weight-data'
 import { useFirstVisit } from '@/hooks/use-first-visit'
+import { useDashboardPerformance } from '@/hooks/use-performance'
 import { Skeleton } from '@/components/ui/skeleton'
-import { LogOut, User, TrendingDown, History } from 'lucide-react'
+import { FadeIn, SlideIn, StaggeredChildren, AnimatedButton, AnimatedCard, CountUp } from '@/components/ui/animated-components'
+import { DashboardStatsCardSkeleton, GoalCardSkeleton, WeightChartSkeleton, WeightTableSkeleton, DashboardLayoutSkeleton } from '@/components/skeletons/enhanced-skeletons'
+import { LogOut, User, TrendingDown, History, Plus } from 'lucide-react'
 
 export default function DashboardPage() {
   const { user, logout } = useAuth()
   const { stats, loading: statsLoading } = useDashboardStats()
   const { startingWeight, currentWeight } = useWeightData()
   const { isFirstVisit, loading: firstVisitLoading, markWelcomeCompleted } = useFirstVisit()
+  const { trackPageLoad } = useDashboardPerformance()
   const [goalHistoryOpen, setGoalHistoryOpen] = useState(false)
   const [addWeightOpen, setAddWeightOpen] = useState(false)
+  const [isPageLoaded, setIsPageLoaded] = useState(false)
   const weightEntriesTableRef = useRef<WeightEntriesTableRef>(null)
+
+  // Track dashboard loading performance
+  const endPageLoadTracking = trackPageLoad()
+
+  // Mark page as loaded when all critical data is ready
+  useEffect(() => {
+    if (!statsLoading && !firstVisitLoading) {
+      setIsPageLoaded(true)
+      endPageLoadTracking()
+    }
+  }, [statsLoading, firstVisitLoading, endPageLoadTracking])
 
   const handleLogout = async () => {
     try {
@@ -59,142 +76,125 @@ export default function DashboardPage() {
       <DashboardErrorBoundary>
         <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
         {/* Header */}
-        <header className="border-b bg-background/80 backdrop-blur-sm">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold">Weight Tracker</h1>
-              <span className="text-muted-foreground">🏋️‍♀️</span>
+        <FadeIn>
+          <header className="border-b bg-background/80 backdrop-blur-sm">
+            <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+              <SlideIn direction="left" delay={100}>
+                <div className="flex items-center space-x-4">
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                    Weight Tracker
+                  </h1>
+                  <span className="text-muted-foreground animate-bounce">🏋️‍♀️</span>
+                </div>
+              </SlideIn>
+
+              <SlideIn direction="right" delay={200}>
+                <div className="flex items-center space-x-3">
+                  {/* User Welcome - Hide on mobile */}
+                  <FadeIn delay={300}>
+                    <div className="hidden md:flex items-center space-x-2 text-sm">
+                      <User className="h-4 w-4" />
+                      <span>Welcome, {user?.email?.split('@')[0]}!</span>
+                    </div>
+                  </FadeIn>
+
+                  {/* Primary Actions Group */}
+                  <div className="flex items-center space-x-2">
+                    <FadeIn delay={350}>
+                      <AddWeightDialog
+                        onSuccess={() => weightEntriesTableRef.current?.refreshEntries()}
+                        trigger={
+                          <AnimatedButton
+                            size="sm"
+                            className="flex items-center space-x-1"
+                            hoverScale
+                            pressEffect
+                            data-testid="add-weight-header"
+                          >
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden sm:inline">Add Weight</span>
+                          </AnimatedButton>
+                        }
+                      />
+                    </FadeIn>
+
+                    <FadeIn delay={400}>
+                      <SyncStatusIndicator compact />
+                    </FadeIn>
+                  </div>
+
+                  {/* Secondary Actions Group */}
+                  <div className="flex items-center space-x-1">
+                    <FadeIn delay={450}>
+                      <HelpModal />
+                    </FadeIn>
+                    <FadeIn delay={500}>
+                      <ThemeToggle />
+                    </FadeIn>
+                    <FadeIn delay={550}>
+                      <AnimatedButton
+                        variant="outline"
+                        size="sm"
+                        onClick={handleLogout}
+                        className="flex items-center space-x-2"
+                        hoverScale
+                        pressEffect
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span className="hidden sm:inline">Logout</span>
+                      </AnimatedButton>
+                    </FadeIn>
+                  </div>
+                </div>
+              </SlideIn>
             </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm">
-                <User className="h-4 w-4" />
-                <span>Welcome, {user?.email}!</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <SyncStatusIndicator compact />
-                <SyncHelpTooltip />
-              </div>
-              <HelpModal />
-              <ThemeToggle />
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleLogout}
-                className="flex items-center space-x-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </Button>
-            </div>
-          </div>
-        </header>
+          </header>
+        </FadeIn>
 
         {/* Main Content */}
         <main className="container mx-auto px-4 py-8">
         {/* Entry Reminder Banner */}
-        <EntryReminderBanner onQuickAddClick={() => setAddWeightOpen(true)} />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Active Goal Display */}
-          <ActiveGoalDisplay />
+        <FadeIn delay={100}>
+          <EntryReminderBanner onQuickAddClick={() => setAddWeightOpen(true)} />
+        </FadeIn>
 
-          {/* Quick Stats Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <TrendingDown className="h-5 w-5 text-green-500" />
-                <span>Quick Stats</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  {statsLoading ? (
-                    <Skeleton className="h-8 w-12 mb-2" />
-                  ) : (
-                    <p className="text-2xl font-bold">{stats.weightEntries}</p>
-                  )}
-                  <p className="text-sm text-muted-foreground">Weight Entries</p>
-                </div>
-                <div>
-                  {statsLoading ? (
-                    <Skeleton className="h-8 w-8 mb-2" />
-                  ) : (
-                    <p className="text-2xl font-bold">{stats.activeGoals}</p>
-                  )}
-                  <p className="text-sm text-muted-foreground">Active Goals</p>
-                </div>
-                <div>
-                  {statsLoading ? (
-                    <Skeleton className="h-8 w-12 mb-2" />
-                  ) : (
-                    <p className="text-2xl font-bold">{stats.dayStreak}</p>
-                  )}
-                  <div className="flex items-center space-x-1">
-                    <p className="text-sm text-muted-foreground">Day Streak</p>
-                    <StreakHelpTooltip />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* New 12-Column Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-8 xl:grid-cols-12 gap-6">
+          {/* Left Column - Goal & Progress Section */}
+          <div className="md:col-span-8 xl:col-span-4 space-y-6">
+            {/* Active Goal Display */}
+            <SlideIn delay={300} direction="up">
+              <ActiveGoalDisplay />
+            </SlideIn>
 
-          {/* Quick Actions Card */}
-          <Card id="quick-actions" className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>
-                Start your weight tracking journey by setting a goal or logging your weight.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <GoalCreationModal />
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={() => setAddWeightOpen(true)}
-                >
-                  Add Weight
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={() => setGoalHistoryOpen(true)}
-                >
-                  <History className="mr-2 h-4 w-4" />
-                  Goal History
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            {/* This Week's Progress */}
+            <SlideIn delay={350} direction="up">
+              <ThisWeekProgress />
+            </SlideIn>
 
-          {/* Weekly Summary Card */}
-          <div className="lg:col-span-3">
-            <WeeklySummaryCard />
+            {/* Trend Analysis - Always Visible */}
+            <SlideIn delay={400} direction="up">
+              <TrendAnalysis />
+            </SlideIn>
           </div>
 
-          {/* Weight Trend Graph */}
-          <div className="lg:col-span-3">
-            <ChartErrorBoundary>
-              <WeightTrendGraph />
-            </ChartErrorBoundary>
-          </div>
+          {/* Right Column - Data & Visualization */}
+          <div className="md:col-span-8 xl:col-span-8 space-y-6">
+            {/* Weight Trend Graph */}
+            <SlideIn delay={450} direction="up">
+              <ChartErrorBoundary>
+                <WeightTrendGraph />
+              </ChartErrorBoundary>
+            </SlideIn>
 
-          {/* Trend Analysis */}
-          <div className="lg:col-span-3">
-            <TrendAnalysis />
-          </div>
-
-          {/* Weight Entries Table */}
-          <div className="lg:col-span-3">
-            <WeightEntriesTable ref={weightEntriesTableRef} />
+            {/* Weight Entries Table */}
+            <SlideIn delay={500} direction="up">
+              <WeightEntriesTable ref={weightEntriesTableRef} />
+            </SlideIn>
           </div>
         </div>
       </main>
+      </div>
       
       <GoalHistorySheet 
         open={goalHistoryOpen}
@@ -219,7 +219,6 @@ export default function DashboardPage() {
         onGetStarted={handleWelcomeGetStarted}
         onSkip={handleWelcomeSkip}
       />
-      </div>
     </DashboardErrorBoundary>
     </TooltipProvider>
   )

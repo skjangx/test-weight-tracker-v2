@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Target, Calendar, TrendingDown, Pencil, Flame, Trophy } from 'lucide-react'
+import { Target, Calendar, TrendingDown, Pencil, Flame, Trophy, History, Plus } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/auth/context'
 import { format, differenceInDays, subDays, parseISO } from 'date-fns'
 import { GoalUpdateModal } from './goal-update-modal'
+import { GoalCreationModal } from './goal-creation-modal'
+import { GoalHistorySheet } from './goal-history-sheet'
 
 interface Goal {
   id: string
@@ -32,6 +34,7 @@ export function ActiveGoalDisplay() {
   const [currentStreak, setCurrentStreak] = useState(0)
   const [loading, setLoading] = useState(true)
   const [editModalOpen, setEditModalOpen] = useState(false)
+  const [historyModalOpen, setHistoryModalOpen] = useState(false)
   const { user } = useAuth()
 
   useEffect(() => {
@@ -69,18 +72,24 @@ export function ActiveGoalDisplay() {
             setWeightEntries(entriesData || [])
           }
 
-          // Fetch current streak
-          const { data: streakData, error: streakError } = await supabase
-            .from('streaks')
-            .select('current_count')
-            .eq('user_id', user.id)
-            .eq('is_active', true)
+          // Fetch current streak from user profile (handle case where user profile doesn't exist)
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('current_streak')
+            .eq('id', user.id)
             .single()
 
-          if (streakError && streakError.code !== 'PGRST116') {
-            console.error('Error fetching streak:', streakError)
+          if (userError) {
+            if (userError.code === 'PGRST116') {
+              // User profile doesn't exist, use default streak of 0
+              console.warn('User profile not found, using default streak')
+              setCurrentStreak(0)
+            } else {
+              console.error('Error fetching user streak:', userError)
+              setCurrentStreak(0)
+            }
           } else {
-            setCurrentStreak(streakData?.current_count || 0)
+            setCurrentStreak(userData?.current_streak || 0)
           }
         }
       } catch (error) {
@@ -233,9 +242,32 @@ export function ActiveGoalDisplay() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Create your first goal to begin your weight management journey!
-          </p>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Create your first goal to begin your weight management journey!
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+              <GoalCreationModal
+                trigger={
+                  <Button className="flex-1" size="lg">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Set Your First Goal
+                  </Button>
+                }
+              />
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setHistoryModalOpen(true)}
+                className="flex-1"
+              >
+                <History className="h-4 w-4 mr-2" />
+                View History
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     )
@@ -459,13 +491,42 @@ export function ActiveGoalDisplay() {
               Goal created on {format(new Date(activeGoal.created_at), 'MMM dd, yyyy')}
             </p>
           </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditModalOpen(true)}
+              className="flex-1"
+              data-testid="update-goal-button"
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Update Goal
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setHistoryModalOpen(true)}
+              className="flex-1"
+              data-testid="goal-history-button"
+            >
+              <History className="h-4 w-4 mr-2" />
+              Goal History
+            </Button>
+          </div>
         </div>
       </CardContent>
       
-      <GoalUpdateModal 
+      <GoalUpdateModal
         goal={activeGoal}
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
+      />
+
+      <GoalHistorySheet
+        open={historyModalOpen}
+        onOpenChange={setHistoryModalOpen}
       />
     </Card>
   )
