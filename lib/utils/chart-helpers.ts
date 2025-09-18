@@ -204,17 +204,23 @@ export function getChangeColor(change: number): string {
 /**
  * Generate chart domain with padding
  */
-export function getChartDomain(data: ChartDataPoint[]): [number, number] {
+export function getChartDomain(data: ChartDataPoint[], goalWeight?: number): [number, number] {
   if (data.length === 0) return [0, 100]
 
   const weights = data.map(d => d.weight)
-  const minWeight = Math.min(...weights)
-  const maxWeight = Math.max(...weights)
-  
+  let minWeight = Math.min(...weights)
+  let maxWeight = Math.max(...weights)
+
+  // Include goal weight in the domain calculation if provided
+  if (goalWeight !== undefined) {
+    minWeight = Math.min(minWeight, goalWeight)
+    maxWeight = Math.max(maxWeight, goalWeight)
+  }
+
   // Add 5% padding above and below
   const range = maxWeight - minWeight
   const padding = Math.max(range * 0.05, 1) // Minimum 1kg padding
-  
+
   return [
     Math.max(0, minWeight - padding),
     maxWeight + padding

@@ -5,34 +5,66 @@ import { toast } from 'sonner'
  * Provides consistent messaging and styling across the application
  */
 
+// Toast debouncing to prevent spam
+const toastCache = new Map<string, number>()
+const DEBOUNCE_DELAY = 2000 // 2 seconds between same toast messages
+
+const shouldShowToast = (message: string): boolean => {
+  const now = Date.now()
+  const lastShown = toastCache.get(message)
+
+  if (!lastShown || (now - lastShown) > DEBOUNCE_DELAY) {
+    toastCache.set(message, now)
+    return true
+  }
+
+  return false
+}
+
+// Standard durations for consistency
+const DURATIONS = {
+  SHORT: 3000,
+  MEDIUM: 4000,
+  LONG: 6000,
+  MILESTONE: 5000, // Reduced from 8000 for better UX
+} as const
+
 export const showSuccessToast = (message: string, description?: string) => {
+  if (!shouldShowToast(message)) return
+
   toast.success(message, {
     description,
-    duration: 4000,
+    duration: DURATIONS.MEDIUM,
     icon: '✅',
   })
 }
 
 export const showErrorToast = (message: string, description?: string) => {
+  if (!shouldShowToast(message)) return
+
   toast.error(message, {
     description,
-    duration: 6000,
+    duration: DURATIONS.LONG,
     icon: '❌',
   })
 }
 
 export const showInfoToast = (message: string, description?: string) => {
+  if (!shouldShowToast(message)) return
+
   toast.info(message, {
     description,
-    duration: 4000,
+    duration: DURATIONS.MEDIUM,
     icon: 'ℹ️',
   })
 }
 
 export const showWarningToast = (message: string, description?: string) => {
+  if (!shouldShowToast(message)) return
+
   toast.warning(message, {
     description,
-    duration: 5000,
+    duration: DURATIONS.LONG,
     icon: '⚠️',
   })
 }
@@ -43,7 +75,7 @@ export const showLoadingToast = (message: string, promise?: Promise<any>) => {
       loading: message,
       success: 'Operation completed successfully!',
       error: 'Operation failed. Please try again.',
-      duration: 4000,
+      duration: DURATIONS.MEDIUM,
     })
   } else {
     return toast.loading(message)
@@ -51,15 +83,18 @@ export const showLoadingToast = (message: string, promise?: Promise<any>) => {
 }
 
 export const showMilestoneToast = (message: string, description?: string) => {
+  // Don't debounce milestone toasts as they're special celebrations
   toast.success(message, {
     description,
-    duration: 8000,
+    duration: DURATIONS.MILESTONE,
     icon: '🎉',
     style: {
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       color: 'white',
       border: 'none',
+      boxShadow: '0 8px 32px rgba(102, 126, 234, 0.4)',
     },
+    className: 'milestone-toast',
   })
 }
 

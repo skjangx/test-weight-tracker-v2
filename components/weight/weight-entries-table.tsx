@@ -42,6 +42,7 @@ interface ProcessedEntry extends WeightEntry {
 
 interface MonthlyStats {
   weeklyAverage: number
+  totalChange: number
   bestDay: {
     date: string
     loss: number
@@ -224,6 +225,7 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
     if (processedEntries.length === 0) {
       return {
         weeklyAverage: 0,
+        totalChange: 0,
         bestDay: null,
         worstDay: null,
         goalAchieved: false,
@@ -234,6 +236,14 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
     // Weekly average for the month
     const totalWeight = processedEntries.reduce((sum, entry) => sum + entry.weight, 0)
     const weeklyAverage = Math.round((totalWeight / processedEntries.length) * 100) / 100
+
+    // Calculate total change for the month (first entry - last entry)
+    // processedEntries are sorted with newest first, so:
+    // - processedEntries[0] = most recent weight (end of month)
+    // - processedEntries[processedEntries.length - 1] = oldest weight (start of month)
+    const currentWeight = processedEntries[0].weight
+    const startWeight = processedEntries[processedEntries.length - 1].weight
+    const totalChange = Math.round((currentWeight - startWeight) * 100) / 100
 
     // Find best and worst days (based on daily change)
     let bestDay = null
@@ -264,9 +274,7 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
     let goalAchieved = false
     let goalProgress = 0
     if (activeGoal && processedEntries.length > 0) {
-      const currentWeight = processedEntries[0].weight
       goalAchieved = currentWeight <= activeGoal.target_weight
-      const startWeight = processedEntries[processedEntries.length - 1].weight
       const totalToLose = startWeight - activeGoal.target_weight
       const weightLost = startWeight - currentWeight
       goalProgress = totalToLose > 0 ? Math.round((weightLost / totalToLose) * 10000) / 100 : 0
@@ -274,6 +282,7 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
 
     return {
       weeklyAverage,
+      totalChange,
       bestDay,
       worstDay,
       goalAchieved,
@@ -326,10 +335,22 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
     return (
       <Card data-testid="weight-entries-table">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5" />
-            <span>Weight Entries</span>
-          </CardTitle>
+          {/* Header with Add Weight Button - Consistent with other states */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-5 w-5" />
+              <CardTitle>Weight Entries</CardTitle>
+            </div>
+            <AddWeightDialog
+              onSuccess={fetchEntries}
+              trigger={
+                <Button variant="secondary" size="sm" data-testid="add-weight-from-table">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Weight
+                </Button>
+              }
+            />
+          </div>
           <CardDescription>Your weight tracking journey starts here</CardDescription>
         </CardHeader>
         <CardContent>
@@ -345,7 +366,7 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
             <div className="text-center space-y-2">
               <h3 className="font-semibold text-lg">Start Your Journey</h3>
               <p className="text-muted-foreground max-w-md">
-                {!activeGoal 
+                {!activeGoal
                   ? "Set a weight goal and add your first weight entry to begin tracking your progress."
                   : "Add your first weight entry to start tracking your progress towards your goal."
                 }
@@ -361,37 +382,47 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
     return (
       <Card data-testid="weight-entries-table">
         <CardHeader>
+          {/* Header with Add Weight Button - Consistent with main layout */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Calendar className="h-5 w-5" />
               <CardTitle>Weight Entries</CardTitle>
             </div>
-            <div className="flex items-center space-x-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handlePreviousMonth}
-                data-testid="previous-month"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <div className="min-w-[140px] text-center">
-                <span className="font-medium">{format(currentMonth, 'MMMM yyyy')}</span>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleNextMonth}
-                disabled={isCurrentMonth()}
-                data-testid="next-month"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <AddWeightDialog
+              onSuccess={fetchEntries}
+              trigger={
+                <Button variant="secondary" size="sm" data-testid="add-weight-from-table">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Weight
+                </Button>
+              }
+            />
           </div>
-          <CardDescription>
-            No entries for {format(currentMonth, 'MMMM yyyy')}
-          </CardDescription>
+
+          {/* Month Navigation - Consistent with main layout */}
+          <div className="flex items-center justify-center space-x-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePreviousMonth}
+              data-testid="previous-month"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="min-w-[140px] text-center" data-testid="current-month">
+              <span className="font-medium">{format(currentMonth, 'MMMM yyyy')}</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextMonth}
+              disabled={isCurrentMonth()}
+              data-testid="next-month"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
@@ -423,9 +454,9 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
           <AddWeightDialog
             onSuccess={fetchEntries}
             trigger={
-              <Button size="sm" data-testid="add-weight-from-table">
+              <Button variant="secondary" size="sm" data-testid="add-weight-from-table">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Weight Entry
+                Add Weight
               </Button>
             }
           />
@@ -455,75 +486,80 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
           </Button>
         </div>
         
-        <CardDescription>
-          {format(currentMonth, 'MMMM yyyy')} weight tracking history
-        </CardDescription>
         
-        {/* Monthly Statistics Header */}
-        {processedEntries.length > 0 && (
-          <div className="mt-4 p-4 bg-muted/50 rounded-lg space-y-3" data-testid="monthly-statistics">
-            <div className="flex items-center justify-between">
-              <h4 className="font-medium text-sm">Monthly Summary</h4>
-              {monthlyStats.goalAchieved && (
-                <Badge variant="default" className="bg-green-500 text-white">
-                  <Trophy className="h-3 w-3 mr-1" />
-                  Goal Achieved! 🎉
-                </Badge>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-              <div className="flex items-center space-x-2" data-testid="average-weight">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Calendar className="h-4 w-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="font-medium">{monthlyStats.weeklyAverage}kg</p>
-                  <p className="text-muted-foreground text-xs">Monthly Average</p>
-                </div>
-              </div>
-              
-              {monthlyStats.bestDay && (
-                <div className="flex items-center space-x-2" data-testid="best-day">
-                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                    <TrendingDown className="h-4 w-4 text-green-600" />
+        {/* Simplified Monthly Summary - Consistent Layout */}
+        <div className="mt-4 space-y-4" data-testid="monthly-statistics">
+          {processedEntries.length > 0 ? (
+            <>
+              {/* Data Available - Show Summary Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Average Card */}
+                <div className="bg-background rounded-lg border p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-sm text-muted-foreground">Average</span>
                   </div>
-                  <div>
-                    <p className="font-medium">-{monthlyStats.bestDay.loss}kg</p>
-                    <p className="text-muted-foreground text-xs">
-                      Best Day ({format(new Date(monthlyStats.bestDay.date), 'MMM dd')})
+                  <p className="text-2xl font-semibold">{monthlyStats.weeklyAverage}kg</p>
+                </div>
+
+                {/* Progress Card */}
+                <div className="bg-background rounded-lg border p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                    <span className="text-sm text-muted-foreground">Progress</span>
+                  </div>
+                  <p className="text-2xl font-semibold">
+                    {monthlyStats.totalChange > 0 ? '+' : ''}{monthlyStats.totalChange ? monthlyStats.totalChange : '0'}kg
+                  </p>
+                </div>
+
+                {/* Best Day Card */}
+                {monthlyStats.bestDay ? (
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <TrendingDown className="h-4 w-4 text-green-600" />
+                      <span className="text-sm text-green-600 dark:text-green-400">Best Day</span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-2xl font-semibold text-green-700 dark:text-green-300">
+                        -{monthlyStats.bestDay.loss}kg
+                      </p>
+                      <p className="text-sm text-green-600 dark:text-green-400">
+                        {format(new Date(monthlyStats.bestDay.date), 'MMM dd')}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm text-blue-600 dark:text-blue-400">Consistency</span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-lg font-semibold text-blue-700 dark:text-blue-300">Great!</p>
+                      <p className="text-sm text-blue-600 dark:text-blue-400">Steady progress</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Optional goal progress - only if significant */}
+              {activeGoal && monthlyStats.goalAchieved && (
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 p-3">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-green-600" />
+                    <p className="text-sm font-medium text-green-700 dark:text-green-300">
+                      🎉 Goal Achieved! Reached {activeGoal.target_weight}kg
                     </p>
                   </div>
                 </div>
               )}
-              
-              {monthlyStats.worstDay && (
-                <div className="flex items-center space-x-2" data-testid="worst-day">
-                  <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                    <TrendingUp className="h-4 w-4 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium">+{monthlyStats.worstDay.gain}kg</p>
-                    <p className="text-muted-foreground text-xs">
-                      Worst Day ({format(new Date(monthlyStats.worstDay.date), 'MMM dd')})
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {activeGoal && monthlyStats.goalProgress > 0 && (
-              <div className="pt-2 border-t border-border/50">
-                <p className="text-xs text-muted-foreground">
-                  {monthlyStats.goalAchieved 
-                    ? `🎉 Congratulations! You've reached your target weight of ${activeGoal.target_weight}kg!`
-                    : `Progress: ${monthlyStats.goalProgress}% towards your ${activeGoal.target_weight}kg goal`
-                  }
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+            </>
+          ) : (
+            /* No Data - Reserve Same Space */
+            <div className="h-[108px]" />
+          )}
+        </div>
       </CardHeader>
       
       <CardContent>

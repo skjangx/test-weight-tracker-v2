@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { GoalCreationModal } from '@/components/goals/goal-creation-modal'
-import { ActiveGoalDisplay } from '@/components/goals/active-goal-display'
+import { ActiveGoalDisplay, ProjectionBanner } from '@/components/goals/active-goal-display'
 import { GoalHistorySheet } from '@/components/goals/goal-history-sheet'
 import { AddWeightDialog } from '@/components/weight/add-weight-dialog'
 import { WeightEntriesTable, type WeightEntriesTableRef } from '@/components/weight/weight-entries-table'
@@ -80,7 +80,7 @@ export default function DashboardPage() {
           <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-16 items-center justify-between px-4">
               <SlideIn direction="left" delay={100}>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                     Weight Tracker
                   </h1>
@@ -89,10 +89,10 @@ export default function DashboardPage() {
               </SlideIn>
 
               <SlideIn direction="right" delay={200}>
-                <div className="flex items-center gap-2">
-                  {/* User Welcome - Responsive visibility */}
+                <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
+                  {/* User Welcome - More responsive */}
                   <FadeIn delay={300}>
-                    <div className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground mr-2">
+                    <div className="hidden xl:flex items-center gap-2 text-sm text-muted-foreground mr-1">
                       <User className="h-4 w-4" />
                       <span>Welcome, {user?.email?.split('@')[0]}!</span>
                     </div>
@@ -105,7 +105,7 @@ export default function DashboardPage() {
                       trigger={
                         <AnimatedButton
                           size="sm"
-                          className="flex items-center gap-1.5"
+                          className="flex items-center gap-1.5 shrink-0"
                           hoverScale
                           pressEffect
                           data-testid="add-weight-header"
@@ -117,13 +117,15 @@ export default function DashboardPage() {
                     />
                   </FadeIn>
 
-                  {/* Sync Status */}
+                  {/* Sync Status - Hide on smallest screens */}
                   <FadeIn delay={400}>
-                    <SyncStatusIndicator compact />
+                    <div className="hidden sm:block">
+                      <SyncStatusIndicator compact />
+                    </div>
                   </FadeIn>
 
-                  {/* Secondary Actions - Grouped */}
-                  <div className="flex items-center gap-1 ml-2">
+                  {/* Secondary Actions - Better spacing */}
+                  <div className="flex items-center gap-1 border-l border-border/50 pl-2 ml-1">
                     <FadeIn delay={450}>
                       <HelpModal />
                     </FadeIn>
@@ -135,12 +137,12 @@ export default function DashboardPage() {
                         variant="ghost"
                         size="sm"
                         onClick={handleLogout}
-                        className="flex items-center gap-1.5"
+                        className="flex items-center gap-1.5 shrink-0"
                         hoverScale
                         pressEffect
                       >
                         <LogOut className="h-4 w-4" />
-                        <span className="hidden md:inline">Logout</span>
+                        <span className="hidden lg:inline">Logout</span>
                       </AnimatedButton>
                     </FadeIn>
                   </div>
@@ -155,6 +157,11 @@ export default function DashboardPage() {
         {/* Entry Reminder Banner */}
         <FadeIn delay={100}>
           <EntryReminderBanner onQuickAddClick={() => setAddWeightOpen(true)} />
+        </FadeIn>
+
+        {/* Projection Banner - Full Width */}
+        <FadeIn delay={150}>
+          <ProjectionBanner />
         </FadeIn>
 
         {/* Balanced Grid Layout */}

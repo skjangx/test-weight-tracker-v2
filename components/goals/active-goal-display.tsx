@@ -363,15 +363,9 @@ export function ActiveGoalDisplay() {
             <span>Current Goal</span>
           </div>
           <div className="flex items-center space-x-2">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setEditModalOpen(true)}
-              data-testid="edit-goal-button"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Badge variant="default">Active</Badge>
+            <Badge className="bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 border-green-300 dark:border-green-700">
+              Active
+            </Badge>
           </div>
         </CardTitle>
         <CardDescription>
@@ -426,7 +420,7 @@ export function ActiveGoalDisplay() {
           )}
 
           {/* Progress Details */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+          <div className="grid grid-cols-2 gap-4 mt-4">
             {/* Weight to Lose */}
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
@@ -434,11 +428,11 @@ export function ActiveGoalDisplay() {
               </div>
               <div>
                 <p className="text-xs font-medium text-muted-foreground">Weight to Lose</p>
-                <p className="text-lg font-semibold" data-testid="weight-to-lose">
-                  {!currentWeight 
+                <p className="text-sm font-semibold" data-testid="weight-to-lose">
+                  {!currentWeight
                     ? 'Add weight entries to track progress'
-                    : weightToLose > 0 
-                      ? `${weightToLose.toFixed(1)} kg to go` 
+                    : weightToLose > 0
+                      ? `${weightToLose.toFixed(1)} kg to go`
                       : 'Goal achieved!'
                   }
                 </p>
@@ -447,9 +441,9 @@ export function ActiveGoalDisplay() {
 
             {/* Progress Status */}
             <div className="flex items-center space-x-3">
-              <div className={`flex-shrink-0 w-3 h-3 rounded-full progress-${progressStatus.status}`} 
+              <div className={`flex-shrink-0 w-3 h-3 rounded-full progress-${progressStatus.status}`}
                    style={{
-                     backgroundColor: progressStatus.status === 'green' ? '#10b981' : 
+                     backgroundColor: progressStatus.status === 'green' ? '#10b981' :
                                     progressStatus.status === 'yellow' ? '#f59e0b' : '#ef4444'
                    }}
                    data-testid="progress-indicator"
@@ -460,37 +454,26 @@ export function ActiveGoalDisplay() {
               </div>
             </div>
 
-            {/* Current Streak */}
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0">
-                <Flame className="h-4 w-4 text-red-500" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Streak</p>
-                <p className="text-sm font-semibold" data-testid="current-streak">
-                  🔥 {currentStreak} day streak
-                </p>
-              </div>
-            </div>
+            {/* Current Streak - Only show if streak > 0 */}
+            {currentStreak > 0 && (
+              <>
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <Flame className="h-4 w-4 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">Streak</p>
+                    <p className="text-sm font-semibold" data-testid="current-streak">
+                      🔥 {currentStreak} day streak
+                    </p>
+                  </div>
+                </div>
+                {/* Empty div to maintain grid alignment */}
+                <div></div>
+              </>
+            )}
           </div>
 
-          {/* Projected Date */}
-          {projectedDate && typeof projectedDate === 'string' && projectedDate.includes('-') && (
-            <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <p className="text-sm text-blue-800 dark:text-blue-200" data-testid="projected-date">
-                Projected: {projectedDate}
-              </p>
-              <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                Based on your 7-day weight trend
-              </p>
-            </div>
-          )}
-
-          <div className="pt-4 border-t">
-            <p className="text-xs text-muted-foreground">
-              Goal created on {format(new Date(activeGoal.created_at), 'MMM dd, yyyy')}
-            </p>
-          </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
@@ -498,7 +481,7 @@ export function ActiveGoalDisplay() {
               variant="outline"
               size="sm"
               onClick={() => setEditModalOpen(true)}
-              className="flex-1"
+              className="flex-1 justify-center"
               data-testid="update-goal-button"
             >
               <Pencil className="h-4 w-4 mr-2" />
@@ -515,6 +498,12 @@ export function ActiveGoalDisplay() {
               Goal History
             </Button>
           </div>
+
+          <div className="pt-4 border-t">
+            <p className="text-xs text-muted-foreground">
+              Goal created on {format(new Date(activeGoal.created_at), 'MMM dd, yyyy')}
+            </p>
+          </div>
         </div>
       </CardContent>
       
@@ -529,5 +518,145 @@ export function ActiveGoalDisplay() {
         onOpenChange={setHistoryModalOpen}
       />
     </Card>
+  )
+}
+
+// Projection banner component to be used outside the card
+export function ProjectionBanner() {
+  const [activeGoal, setActiveGoal] = useState<Goal | null>(null)
+  const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const { user } = useAuth()
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) return
+
+      try {
+        // Fetch active goal
+        const { data: goalData, error: goalError } = await supabase
+          .from('goals')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .single()
+
+        if (goalError && goalError.code !== 'PGRST116') {
+          console.error('Error fetching active goal:', goalError)
+          return
+        }
+
+        setActiveGoal(goalData)
+
+        if (goalData) {
+          // Fetch weight entries
+          const { data: entriesData, error: entriesError } = await supabase
+            .from('weight_entries')
+            .select('id, weight, date, created_at')
+            .eq('user_id', user.id)
+            .order('date', { ascending: false })
+            .order('created_at', { ascending: false })
+
+          if (entriesError) {
+            console.error('Error fetching weight entries:', entriesError)
+          } else {
+            setWeightEntries(entriesData || [])
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [user])
+
+  // Calculate current weight
+  const getCurrentWeight = () => {
+    if (weightEntries.length === 0) return null
+
+    const groupedByDate = weightEntries.reduce((acc, entry) => {
+      const date = entry.date
+      if (!acc[date]) {
+        acc[date] = []
+      }
+      acc[date].push(entry.weight)
+      return acc
+    }, {} as Record<string, number[]>)
+
+    const dates = Object.keys(groupedByDate).sort().reverse()
+    if (dates.length === 0) return null
+
+    const mostRecentDateWeights = groupedByDate[dates[0]]
+    const average = mostRecentDateWeights.reduce((sum, weight) => sum + weight, 0) / mostRecentDateWeights.length
+    return Math.round(average * 100) / 100
+  }
+
+  const currentWeight = getCurrentWeight()
+
+  if (loading || !activeGoal || !currentWeight || weightEntries.length < 2) return null
+
+  // Same calculation logic as in ActiveGoalDisplay
+  const getLast7DaysEntries = () => {
+    const sevenDaysAgo = subDays(new Date(), 7)
+    return weightEntries.filter(entry =>
+      new Date(entry.date) >= sevenDaysAgo
+    ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  }
+
+  const calculateProjectedDate = () => {
+    const last7Days = getLast7DaysEntries()
+    if (last7Days.length < 2) return null
+
+    const oldestEntry = last7Days[0]
+    const newestEntry = last7Days[last7Days.length - 1]
+    const daysDiff = differenceInDays(new Date(newestEntry.date), new Date(oldestEntry.date))
+
+    if (daysDiff === 0) return null
+
+    const weightLossRate = (oldestEntry.weight - newestEntry.weight) / daysDiff
+    if (weightLossRate <= 0) return "At current rate, goal may not be achievable"
+
+    const weightToLose = Math.max(0, currentWeight - activeGoal.target_weight)
+    const daysToGoal = weightToLose / weightLossRate
+    const projectedDate = new Date()
+    projectedDate.setDate(projectedDate.getDate() + daysToGoal)
+
+    return format(projectedDate, 'yyyy-MM-dd')
+  }
+
+  const projectedDate = calculateProjectedDate()
+
+  if (!projectedDate || typeof projectedDate !== 'string' || !projectedDate.includes('-')) {
+    return null
+  }
+
+  return (
+    <div className="w-full mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+      <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <div>
+            <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+              Projected Goal Date
+            </p>
+            <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
+              {format(new Date(projectedDate), 'EEEE, MMMM do, yyyy')}
+            </p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Days to goal</p>
+          <p className="text-xl font-bold text-blue-900 dark:text-blue-100">
+            {differenceInDays(new Date(projectedDate), new Date())}
+          </p>
+        </div>
+      </div>
+      <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 text-center">
+        Based on your 7-day weight loss trend
+      </p>
+    </div>
   )
 }

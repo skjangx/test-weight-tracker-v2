@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
+import { useEffect, useState, useRef, useCallback } from 'react'
+import { showMilestoneToast } from '@/lib/utils/toast'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/auth/context'
 
@@ -21,138 +21,158 @@ interface Particle {
   maxLife: number
   color: string
   size: number
+  rotation: number
+  rotationSpeed: number
 }
 
-// Confetti colors for celebration
+// Optimized confetti colors for celebration
 const CONFETTI_COLORS = [
   '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
   '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
-]
+] as const
 
-export function ConfettiCelebration({ 
-  isActive, 
-  milestone, 
-  onComplete 
+export function ConfettiCelebration({
+  isActive,
+  milestone,
+  onComplete
 }: ConfettiCelebrationProps) {
   const [particles, setParticles] = useState<Particle[]>([])
-  const [animationId, setAnimationId] = useState<number | null>(null)
+  const animationRef = useRef<number>()
+  const startTimeRef = useRef<number>()
 
-  // Create confetti particles
-  const createParticles = (count: number = 50): Particle[] => {
+  // Check for reduced motion preference
+  const prefersReducedMotion = typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  // Create confetti particles (reduced count for better performance)
+  const createParticles = useCallback((count: number = 30): Particle[] => {
+    if (prefersReducedMotion) return [] // Respect accessibility preferences
+
     const newParticles: Particle[] = []
-    const centerX = window.innerWidth / 2
-    const centerY = window.innerHeight / 2
+    const centerX = typeof window !== 'undefined' ? window.innerWidth / 2 : 400
+    const centerY = typeof window !== 'undefined' ? window.innerHeight / 3 : 200 // Higher up for better effect
 
     for (let i = 0; i < count; i++) {
       newParticles.push({
-        x: centerX + (Math.random() - 0.5) * 200,
-        y: centerY + (Math.random() - 0.5) * 100,
-        vx: (Math.random() - 0.5) * 8,
-        vy: (Math.random() - 0.5) * 8 - 2,
+        x: centerX + (Math.random() - 0.5) * 150, // Smaller spread
+        y: centerY + (Math.random() - 0.5) * 50,
+        vx: (Math.random() - 0.5) * 10, // More dynamic spread
+        vy: Math.random() * -8 - 2, // Always shoot upward initially
         life: 0,
-        maxLife: 60 + Math.random() * 60, // 1-2 seconds at 60fps
+        maxLife: 90 + Math.random() * 60, // 1.5-2.5 seconds
         color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
-        size: 3 + Math.random() * 4
+        size: 2 + Math.random() * 3, // Smaller particles for better performance
+        rotation: Math.random() * 360,
+        rotationSpeed: (Math.random() - 0.5) * 10
       })
     }
 
     return newParticles
-  }
+  }, [prefersReducedMotion])
 
-  // Update particle physics
-  const updateParticles = (particles: Particle[]): Particle[] => {
+  // Update particle physics with requestAnimationFrame
+  const updateParticles = useCallback((particles: Particle[], deltaTime: number): Particle[] => {
+    const timeFactor = deltaTime / 16 // Normalize to 60fps
+
     return particles
       .map(particle => ({
         ...particle,
-        x: particle.x + particle.vx,
-        y: particle.y + particle.vy,
-        vy: particle.vy + 0.2, // Gravity
-        vx: particle.vx * 0.99, // Air resistance
-        life: particle.life + 1
+        x: particle.x + particle.vx * timeFactor,
+        y: particle.y + particle.vy * timeFactor,
+        vy: particle.vy + 0.3 * timeFactor, // Gravity
+        vx: particle.vx * (0.99 ** timeFactor), // Air resistance
+        rotation: particle.rotation + particle.rotationSpeed * timeFactor,
+        life: particle.life + timeFactor
       }))
-      .filter(particle => particle.life < particle.maxLife)
-  }
+      .filter(particle => particle.life < particle.maxLife && particle.y < window.innerHeight + 100)
+  }, [])
 
-  // Animation loop
-  const animate = () => {
+  // Optimized animation loop using requestAnimationFrame
+  const animate = useCallback((currentTime: number) => {
+    if (!startTimeRef.current) {
+      startTimeRef.current = currentTime
+    }
+
+    const deltaTime = currentTime - (startTimeRef.current || currentTime)
+    startTimeRef.current = currentTime
+
     setParticles(prevParticles => {
-      const updatedParticles = updateParticles(prevParticles)
-      
-      if (updatedParticles.length === 0) {
+      if (prevParticles.length === 0) {
         // Animation complete
-        setAnimationId(null)
         onComplete?.()
         return []
       }
-      
-      return updatedParticles
+
+      return updateParticles(prevParticles, Math.min(deltaTime, 32)) // Cap delta time
     })
-  }
+
+    animationRef.current = requestAnimationFrame(animate)
+  }, [updateParticles, onComplete])
 
   // Start confetti animation
   useEffect(() => {
-    if (isActive && !animationId) {
-      // Show celebration toast
-      toast.success(`🎉 Milestone Achieved!`, {
-        description: `Congratulations! You've lost ${milestone}kg!`,
-        duration: 5000
-      })
+    if (isActive && !animationRef.current) {
+      // Show celebration toast (now using standardized function)
+      showMilestoneToast(
+        `🎉 Milestone Achieved!`,
+        `Congratulations! You've lost ${milestone}kg!`
+      )
 
-      // Create particles and start animation
-      setParticles(createParticles())
-      
-      const id = setInterval(animate, 16) // ~60fps
-      setAnimationId(id)
+      // Only create confetti if motion is not reduced
+      if (!prefersReducedMotion) {
+        setParticles(createParticles())
+        startTimeRef.current = undefined
+        animationRef.current = requestAnimationFrame(animate)
+      } else {
+        // Just complete immediately for accessibility
+        setTimeout(() => onComplete?.(), 100)
+      }
     }
 
     return () => {
-      if (animationId) {
-        clearInterval(animationId)
-        setAnimationId(null)
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+        animationRef.current = undefined
       }
     }
-  }, [isActive, milestone, animationId, onComplete])
+  }, [isActive, milestone, createParticles, animate, onComplete, prefersReducedMotion])
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      if (animationId) {
-        clearInterval(animationId)
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [animationId])
+  }, [])
 
-  if (!isActive || particles.length === 0) return null
+  if (!isActive || particles.length === 0 || prefersReducedMotion) return null
 
   return (
-    <div 
+    <div
       className="fixed inset-0 pointer-events-none z-50"
-      style={{ 
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh'
-      }}
+      role="img"
+      aria-label="Celebration confetti animation"
     >
       <svg
         width="100%"
         height="100%"
-        style={{ 
-          position: 'absolute',
-          top: 0,
-          left: 0
+        className="absolute inset-0"
+        style={{
+          mixBlendMode: 'multiply' // Better blending with background
         }}
       >
         {particles.map((particle, index) => (
-          <circle
+          <rect
             key={index}
-            cx={particle.x}
-            cy={particle.y}
-            r={particle.size}
+            x={particle.x - particle.size / 2}
+            y={particle.y - particle.size / 2}
+            width={particle.size}
+            height={particle.size}
             fill={particle.color}
-            opacity={1 - (particle.life / particle.maxLife)}
-            transform={`rotate(${particle.life * 5} ${particle.x} ${particle.y})`}
+            opacity={Math.max(0, 1 - (particle.life / particle.maxLife))}
+            transform={`rotate(${particle.rotation} ${particle.x} ${particle.y})`}
+            rx={particle.size * 0.2} // Slight rounding for better appearance
           />
         ))}
       </svg>
@@ -164,60 +184,91 @@ export function ConfettiCelebration({
 export function useMilestoneCelebration() {
   const [celebratingMilestone, setCelebratingMilestone] = useState<number | null>(null)
   const [lastCelebratedMilestone, setLastCelebratedMilestone] = useState<number>(0)
+  const [isCheckingMilestone, setIsCheckingMilestone] = useState(false)
+  const lastCheckRef = useRef<string>('')
 
-  const checkAndCelebrateMilestone = async (
+  const checkAndCelebrateMilestone = useCallback(async (
     startingWeight: number,
     currentWeight: number,
     userId: string
   ) => {
-    const weightLost = startingWeight - currentWeight
-    const currentMilestone = Math.floor(weightLost / 3) * 3 // Round down to nearest 3kg milestone
+    // Debounce milestone checks to prevent race conditions
+    const checkKey = `${startingWeight}-${currentWeight}-${userId}`
+    if (isCheckingMilestone || lastCheckRef.current === checkKey) {
+      return
+    }
 
-    // Check if we've reached a new milestone (minimum 3kg)
-    if (
-      currentMilestone >= 3 && 
-      currentMilestone > lastCelebratedMilestone &&
-      weightLost >= currentMilestone
-    ) {
-      // Check if this milestone was already recorded in database
-      try {
-        const { data: existingMilestone } = await supabase
+    lastCheckRef.current = checkKey
+    setIsCheckingMilestone(true)
+
+    try {
+      const weightLost = startingWeight - currentWeight
+      const currentMilestone = Math.floor(weightLost / 3) * 3 // Round down to nearest 3kg milestone
+
+      // Check if we've reached a new milestone (minimum 3kg)
+      if (
+        currentMilestone >= 3 &&
+        currentMilestone > lastCelebratedMilestone &&
+        weightLost >= currentMilestone
+      ) {
+        // Check if this milestone was already recorded in database
+        const { data: existingMilestone, error: fetchError } = await supabase
           .from('milestones')
           .select('*')
           .eq('user_id', userId)
           .eq('weight_lost', currentMilestone)
-          .single()
+          .maybeSingle() // Use maybeSingle instead of single to avoid errors
+
+        if (fetchError) {
+          console.error('Error fetching milestone:', fetchError)
+          return
+        }
 
         if (!existingMilestone) {
-          // Record new milestone in database
-          await supabase
+          // Use upsert to prevent duplicate key errors
+          const { error: insertError } = await supabase
             .from('milestones')
-            .insert({
+            .upsert({
               user_id: userId,
               weight_lost: currentMilestone,
               achieved_at: new Date().toISOString()
+            }, {
+              onConflict: 'user_id,weight_lost'
             })
 
+          if (insertError) {
+            console.error('Error recording milestone:', insertError)
+            // Don't celebrate if we can't record it
+            return
+          }
+
+          // Only celebrate if successfully recorded
           setCelebratingMilestone(currentMilestone)
           setLastCelebratedMilestone(currentMilestone)
         }
-      } catch (error) {
-        console.error('Error checking/recording milestone:', error)
-        // Still celebrate even if database operation fails
-        setCelebratingMilestone(currentMilestone)
-        setLastCelebratedMilestone(currentMilestone)
       }
+    } catch (error) {
+      console.error('Error in milestone check:', error)
+    } finally {
+      setIsCheckingMilestone(false)
+      // Clear check key after a delay to allow for new checks
+      setTimeout(() => {
+        if (lastCheckRef.current === checkKey) {
+          lastCheckRef.current = ''
+        }
+      }, 5000)
     }
-  }
+  }, [lastCelebratedMilestone, isCheckingMilestone])
 
-  const completeCelebration = () => {
+  const completeCelebration = useCallback(() => {
     setCelebratingMilestone(null)
-  }
+  }, [])
 
   return {
     celebratingMilestone,
     checkAndCelebrateMilestone,
-    completeCelebration
+    completeCelebration,
+    isCheckingMilestone
   }
 }
 
@@ -230,17 +281,24 @@ export function MilestoneTracker({
   currentWeight?: number
 }) {
   const { user } = useAuth()
-  const { 
-    celebratingMilestone, 
-    checkAndCelebrateMilestone, 
-    completeCelebration 
+  const {
+    celebratingMilestone,
+    checkAndCelebrateMilestone,
+    completeCelebration,
+    isCheckingMilestone
   } = useMilestoneCelebration()
 
+  // Debounced effect to prevent excessive milestone checks
   useEffect(() => {
-    if (startingWeight && currentWeight && user) {
-      checkAndCelebrateMilestone(startingWeight, currentWeight, user.id)
+    if (startingWeight && currentWeight && user && !isCheckingMilestone) {
+      // Add a small delay to debounce rapid weight updates
+      const timeoutId = setTimeout(() => {
+        checkAndCelebrateMilestone(startingWeight, currentWeight, user.id)
+      }, 500)
+
+      return () => clearTimeout(timeoutId)
     }
-  }, [startingWeight, currentWeight, user, checkAndCelebrateMilestone])
+  }, [startingWeight, currentWeight, user, checkAndCelebrateMilestone, isCheckingMilestone])
 
   return (
     <ConfettiCelebration

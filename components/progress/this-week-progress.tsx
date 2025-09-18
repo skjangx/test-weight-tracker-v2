@@ -178,22 +178,36 @@ export function ThisWeekProgress() {
             <p className="text-sm text-muted-foreground">Days logged</p>
           </div>
 
-          {/* Current Streak */}
+          {/* Current Streak - Hide when 0, show encouragement instead */}
           <div className="space-y-1">
-            <div className="flex items-center space-x-2">
-              <Flame className="h-4 w-4 text-orange-500" />
-              <div className="flex items-center space-x-1">
-                <CountUp
-                  value={stats.dayStreak}
-                  className="text-lg font-semibold text-orange-600 dark:text-orange-400"
-                  duration={700}
-                />
-                <span className="text-sm text-muted-foreground">
-                  {stats.dayStreak === 1 ? 'day' : 'days'}
-                </span>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">Current streak</p>
+            {stats.dayStreak > 0 ? (
+              <>
+                <div className="flex items-center space-x-2">
+                  <Flame className="h-4 w-4 text-orange-500" />
+                  <div className="flex items-center space-x-1">
+                    <CountUp
+                      value={stats.dayStreak}
+                      className="text-lg font-semibold text-orange-600 dark:text-orange-400"
+                      duration={700}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {stats.dayStreak === 1 ? 'day' : 'days'}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">Current streak</p>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center space-x-2">
+                  <Target className="h-4 w-4 text-blue-500" />
+                  <span className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                    Ready to start!
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">Log today to begin streak</p>
+              </>
+            )}
           </div>
 
           {/* Weekly Average */}

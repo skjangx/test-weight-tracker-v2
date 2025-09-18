@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { motion, useAnimation } from 'framer-motion'
 import {
   LineChart,
   Line,
@@ -11,7 +12,9 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   Legend,
-  Dot
+  Dot,
+  Area,
+  ComposedChart
 } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -75,7 +78,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
         {change !== 0 && (
           <>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Daily change:</span>
+              <span className="text-muted-foreground">Change from previous:</span>
               <span className={`font-medium ${getChangeColor(change)}`}>
                 {formatWeightChange(change)}
               </span>
@@ -104,7 +107,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 // Custom milestone dot component
 const MilestoneDot = ({ cx, cy, fill, payload }: CustomDotProps) => {
   if (!payload?.isMilestone) return null
-  
+
   return (
     <Dot
       cx={cx}
@@ -113,6 +116,25 @@ const MilestoneDot = ({ cx, cy, fill, payload }: CustomDotProps) => {
       fill="#22c55e"
       stroke="#16a34a"
       strokeWidth={2}
+    />
+  )
+}
+
+// Custom animated line component for trend line drawing effect
+const AnimatedLine = ({ points }: { points: string }) => {
+  return (
+    <motion.path
+      d={points}
+      fill="none"
+      stroke="#2563eb"
+      strokeWidth={2}
+      initial={{ pathLength: 0 }}
+      animate={{ pathLength: 1 }}
+      transition={{
+        duration: 1.5,
+        ease: "easeInOut",
+        delay: 0.5
+      }}
     />
   )
 }
@@ -137,16 +159,56 @@ const TimePeriodSelector = ({
       {periods.map(({ value, label }) => (
         <Button
           key={value}
-          variant={currentPeriod === value ? 'default' : 'outline'}
+          variant="secondary"
           size="sm"
           onClick={() => onPeriodChange(value)}
-          className="text-xs"
+          className={`text-xs ${
+            currentPeriod === value
+              ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+              : ''
+          }`}
         >
           {label}
         </Button>
       ))}
     </div>
   )
+}
+
+// Animation variants for natural motion
+const chartVariants = {
+  hidden: {
+    opacity: 0,
+    y: 20,
+    scale: 0.98
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      damping: 20,
+      stiffness: 100,
+      mass: 0.8,
+      when: "beforeChildren",
+      staggerChildren: 0.1
+    }
+  }
+}
+
+const legendVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      damping: 15,
+      stiffness: 120,
+      delay: 0.3
+    }
+  }
 }
 
 // Main Weight Trend Graph component
@@ -164,15 +226,17 @@ export function WeightTrendGraph() {
   } = useWeightData()
 
   const { activeGoal } = useActiveGoal()
-  
-  // Enable milestone celebrations
-  const { triggerCelebration } = useMilestoneCelebrations({ 
-    chartData, 
-    enabled: true 
+
+  // Milestone celebrations handled by MilestoneTracker component to prevent duplicates
+  const { triggerCelebration } = useMilestoneCelebrations({
+    chartData,
+    enabled: false
   })
-  
+
   // Chart dimensions and domain
-  const chartDomain = useMemo(() => getChartDomain(chartData), [chartData])
+  const chartDomain = useMemo(() => getChartDomain(chartData, activeGoal?.target_weight), [chartData, activeGoal?.target_weight])
+
+
   
   // Calculate trend direction
   const trendDirection = useMemo(() => {
@@ -255,10 +319,6 @@ export function WeightTrendGraph() {
           <div className="flex items-center space-x-2">
             <Calendar className="h-5 w-5" />
             <CardTitle>Weight Trend</CardTitle>
-            <div className="flex items-center space-x-1 ml-4">
-              {getTrendIcon()}
-              <span className="text-sm text-muted-foreground">{getTrendText()}</span>
-            </div>
           </div>
           <TimePeriodSelector
             currentPeriod={config.period}
@@ -266,69 +326,41 @@ export function WeightTrendGraph() {
           />
         </div>
         
-        {/* Quick stats */}
-        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-          {currentWeight && (
-            <span>Current: {formatWeight(currentWeight)}</span>
-          )}
-          {totalWeightLost && totalWeightLost > 0 && (
-            <span className="text-green-600">
-              Lost: {formatWeight(totalWeightLost)}
-            </span>
-          )}
-          {activeGoal && (
-            <span className="flex items-center space-x-1">
-              <Target className="h-3 w-3" />
-              <span>Goal: {formatWeight(activeGoal.target_weight)}</span>
-            </span>
-          )}
-        </div>
       </CardHeader>
       
       <CardContent>
         {/* Chart controls */}
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Button
-                variant={config.showMovingAverage ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setShowMovingAverage(!config.showMovingAverage)}
-              >
-                7-day average
-              </Button>
-              <MovingAverageHelpTooltip />
-            </div>
-          </div>
           
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            <span>{chartData.length} data points</span>
-            <span>•</span>
-            <div className="flex items-center space-x-1">
-              <span>🟢 = 3kg milestones</span>
-              <MilestoneHelpTooltip />
-            </div>
-          </div>
         </div>
 
         {/* Main chart */}
-        <div className="h-[300px] w-full">
+        <motion.div
+          className="h-[300px] w-full relative"
+          variants={chartVariants}
+          initial="hidden"
+          animate="visible"
+        >
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
+            <ComposedChart
               data={chartData}
               margin={{
                 top: 5,
-                right: 30,
-                left: 20,
-                bottom: 5,
+                right: 5,
+                left: 5,
+                bottom: 20,
               }}
             >
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis
                 dataKey="displayDate"
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
+                interval="preserveStartEnd"
+                angle={-45}
+                textAnchor="end"
+                height={60}
               />
               <YAxis
                 domain={chartDomain}
@@ -348,15 +380,27 @@ export function WeightTrendGraph() {
                       ? "#ef4444" // Red if above goal
                       : "#22c55e" // Green if below goal
                   }
-                  strokeDasharray="5 5"
-                  strokeWidth={2}
+                  strokeDasharray="2 4"
+                  strokeWidth={1}
                 />
               )}
               
-              {/* Legend */}
-              <Legend 
-                iconType="line"
-                wrapperStyle={{ fontSize: '12px' }}
+
+              {/* Define gradient */}
+              <defs>
+                <linearGradient id="weightGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0.05}/>
+                </linearGradient>
+              </defs>
+
+              {/* Gradient area under the line */}
+              <Area
+                type="monotone"
+                dataKey="weight"
+                stroke="none"
+                fill="url(#weightGradient)"
+                isAnimationActive={false}
               />
 
               {/* Main weight line */}
@@ -368,6 +412,7 @@ export function WeightTrendGraph() {
                 dot={<MilestoneDot />}
                 activeDot={{ r: 4, stroke: "#2563eb", strokeWidth: 2 }}
                 name="Weight"
+                isAnimationActive={true}
               />
 
               {/* Moving average line (US-4.3) */}
@@ -383,12 +428,18 @@ export function WeightTrendGraph() {
                   name="7-day average"
                 />
               )}
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
-        </div>
+
+        </motion.div>
 
         {/* Chart legend */}
-        <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+        <motion.div
+          className="flex items-center justify-between mt-2 text-xs text-muted-foreground"
+          variants={legendVariants}
+          initial="hidden"
+          animate="visible"
+        >
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
               <div className="w-3 h-0.5 bg-blue-600"></div>
@@ -413,11 +464,8 @@ export function WeightTrendGraph() {
               </div>
             )}
           </div>
-          
-          <div>
-            Showing {config.period === 'all' ? 'all time' : config.period}
-          </div>
-        </div>
+
+        </motion.div>
       </CardContent>
     </Card>
   )
