@@ -5,6 +5,7 @@ import { QueryProvider } from "@/components/providers/query-provider"
 import { AuthProvider } from "@/lib/auth/context"
 import { SyncProvider } from "@/lib/sync/context"
 import { Toaster } from "@/components/ui/sonner"
+import { WebVitals } from "@/components/performance/web-vitals"
 import "./globals.css";
 
 const geistSans = Geist({
@@ -43,6 +44,7 @@ export default function RootLayout({
               <SyncProvider>
                 {children}
                 <Toaster />
+                <WebVitals />
               </SyncProvider>
             </AuthProvider>
           </ThemeProvider>

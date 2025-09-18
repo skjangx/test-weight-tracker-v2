@@ -12,6 +12,15 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# visual testing
+/tests/screenshots/actual/
+/tests/screenshots/diff/
+/tests/helpers/visual-auth-state.json
 
 # next.js
 /.next/
