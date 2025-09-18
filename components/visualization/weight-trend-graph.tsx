@@ -16,6 +16,7 @@ import {
   Area,
   ComposedChart
 } from 'recharts'
+import { parseISO, format, addDays } from 'date-fns'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -34,6 +35,90 @@ import {
 } from '@/lib/utils/chart-helpers'
 import { TrendingDown, TrendingUp, Minus, Target, Calendar } from 'lucide-react'
 import { MovingAverageHelpTooltip, MilestoneHelpTooltip } from '@/components/help/help-tooltip'
+
+// Helper function to calculate year divider lines
+const calculateYearDividers = (chartData: any[]) => {
+  if (chartData.length < 2) return []
+
+  const years = new Set<number>()
+  const dividers: { year: number; date: string; displayDate: string }[] = []
+
+  chartData.forEach(point => {
+    const date = parseISO(point.date)
+    const year = date.getFullYear()
+
+    if (!years.has(year)) {
+      years.add(year)
+      // Add year divider at January 1st of each year (except the first data point's year)
+      if (years.size > 1) {
+        const yearStart = new Date(year, 0, 1)
+        dividers.push({
+          year,
+          date: yearStart.toISOString().split('T')[0],
+          displayDate: format(yearStart, 'MMM d')
+        })
+      }
+    }
+  })
+
+  return dividers.filter(divider => {
+    // Only include dividers that fall within our data range
+    const dividerDate = parseISO(divider.date)
+    const firstDataDate = parseISO(chartData[chartData.length - 1].date) // Last item is earliest (sorted desc)
+    const lastDataDate = parseISO(chartData[0].date) // First item is latest
+
+    return dividerDate >= firstDataDate && dividerDate <= lastDataDate
+  })
+}
+
+// Helper function to calculate trend projection (simple linear regression)
+const calculateTrendProjection = (chartData: any[], daysToProject: number = 30) => {
+  if (chartData.length < 3) return []
+
+  // Use last 10 data points for trend calculation (or all if less than 10)
+  const recentData = chartData.slice(0, Math.min(10, chartData.length))
+
+  // Convert dates to numbers (days since first point) for regression
+  const firstDate = parseISO(recentData[recentData.length - 1].date)
+  const dataPoints = recentData.map(point => {
+    const date = parseISO(point.date)
+    const daysDiff = Math.floor((date.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24))
+    return { x: daysDiff, y: point.weight }
+  }).reverse() // Reverse to get chronological order
+
+  // Simple linear regression
+  const n = dataPoints.length
+  const sumX = dataPoints.reduce((sum, point) => sum + point.x, 0)
+  const sumY = dataPoints.reduce((sum, point) => sum + point.y, 0)
+  const sumXY = dataPoints.reduce((sum, point) => sum + point.x * point.y, 0)
+  const sumXX = dataPoints.reduce((sum, point) => sum + point.x * point.x, 0)
+
+  const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX)
+  const intercept = (sumY - slope * sumX) / n
+
+  // Generate projection points
+  const projectionPoints = []
+  const lastDataPoint = dataPoints[dataPoints.length - 1]
+  const lastDate = parseISO(chartData[0].date) // Most recent actual data point
+
+  for (let i = 1; i <= daysToProject; i++) {
+    const projectedDate = addDays(lastDate, i)
+    const daysSinceFirst = lastDataPoint.x + i
+    const projectedWeight = slope * daysSinceFirst + intercept
+
+    // Only project if trend makes sense (reasonable weight range)
+    if (projectedWeight > 40 && projectedWeight < 400) {
+      projectionPoints.push({
+        date: projectedDate.toISOString().split('T')[0],
+        displayDate: format(projectedDate, 'MMM dd'),
+        weight: Math.round(projectedWeight * 10) / 10, // Round to 1 decimal
+        isProjection: true
+      })
+    }
+  }
+
+  return projectionPoints
+}
 
 interface CustomTooltipProps {
   active?: boolean
@@ -236,8 +321,24 @@ export function WeightTrendGraph() {
   // Chart dimensions and domain
   const chartDomain = useMemo(() => getChartDomain(chartData, activeGoal?.target_weight), [chartData, activeGoal?.target_weight])
 
+  // Calculate year dividers for multi-year spans
+  const yearDividers = useMemo(() => calculateYearDividers(chartData), [chartData])
 
-  
+  // Calculate trend projection
+  const trendProjection = useMemo(() => {
+    // Only show projection for "all time" view and when we have enough data
+    if (config.period === 'all' && chartData.length >= 3) {
+      return calculateTrendProjection(chartData, 30)
+    }
+    return []
+  }, [chartData, config.period])
+
+  // Combine actual data with projection for chart
+  const combinedChartData = useMemo(() => {
+    if (trendProjection.length === 0) return chartData
+    return [...chartData, ...trendProjection]
+  }, [chartData, trendProjection])
+
   // Calculate trend direction
   const trendDirection = useMemo(() => {
     if (chartData.length < 2) return 'flat'
@@ -343,7 +444,7 @@ export function WeightTrendGraph() {
         >
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
-              data={chartData}
+              data={combinedChartData}
               margin={{
                 top: 5,
                 right: 5,
@@ -384,7 +485,24 @@ export function WeightTrendGraph() {
                   strokeWidth={1}
                 />
               )}
-              
+
+              {/* Year divider lines for multi-year spans */}
+              {yearDividers.map((divider) => (
+                <ReferenceLine
+                  key={divider.year}
+                  x={divider.displayDate}
+                  stroke="#94a3b8"
+                  strokeDasharray="1 3"
+                  strokeWidth={1}
+                  label={{
+                    value: divider.year.toString(),
+                    position: 'top',
+                    offset: 10,
+                    style: { fontSize: '11px', fill: '#64748b' }
+                  }}
+                />
+              ))}
+
 
               {/* Define gradient */}
               <defs>
@@ -428,6 +546,21 @@ export function WeightTrendGraph() {
                   name="7-entry average"
                 />
               )}
+
+              {/* Trend projection line */}
+              {trendProjection.length > 0 && (
+                <Line
+                  type="monotone"
+                  dataKey="weight"
+                  stroke="#f59e0b"
+                  strokeWidth={2}
+                  strokeDasharray="3 6"
+                  dot={false}
+                  activeDot={{ r: 3, stroke: "#f59e0b", strokeWidth: 2 }}
+                  name="Trend projection"
+                  connectNulls={false}
+                />
+              )}
             </ComposedChart>
           </ResponsiveContainer>
 
@@ -453,7 +586,7 @@ export function WeightTrendGraph() {
             )}
             {activeGoal && (
               <div className="flex items-center space-x-1">
-                <div 
+                <div
                   className={`w-3 h-0.5 border-dashed border-t-2 ${
                     currentWeight && currentWeight > activeGoal.target_weight
                       ? "border-red-500"
@@ -461,6 +594,12 @@ export function WeightTrendGraph() {
                   }`}
                 ></div>
                 <span>Goal weight</span>
+              </div>
+            )}
+            {trendProjection.length > 0 && (
+              <div className="flex items-center space-x-1">
+                <div className="w-3 h-0.5 bg-amber-500 border-dashed border-t"></div>
+                <span>Trend projection</span>
               </div>
             )}
           </div>
