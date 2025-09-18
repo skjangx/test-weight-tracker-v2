@@ -4,22 +4,24 @@ import { useSync } from '@/lib/sync/context'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { 
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { toast } from 'sonner'
-import { 
-  RefreshCw, 
-  Wifi, 
-  WifiOff, 
-  CheckCircle, 
-  AlertCircle, 
+import { showSuccessToast, showErrorToast, showInfoToast, ToastMessages } from '@/lib/utils/toast'
+import { PulseIndicator, AnimatedButton } from '@/components/ui/animated-components'
+import {
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  CheckCircle,
+  AlertCircle,
   Loader2,
   Clock
 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 interface SyncStatusIndicatorProps {
   showRefreshButton?: boolean
@@ -33,23 +35,25 @@ export function SyncStatusIndicator({
   compact = false
 }: SyncStatusIndicatorProps) {
   const { syncStatus, manualSync, clearError, getTimeSinceLastSync } = useSync()
+  const [isClient, setIsClient] = useState(false)
+
+  // Prevent hydration mismatch by only showing online status after client hydration
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const handleManualSync = async () => {
     try {
       await manualSync()
-      toast.success('Data refreshed successfully', {
-        icon: <CheckCircle className="h-4 w-4" />
-      })
+      showSuccessToast(ToastMessages.sync.success)
     } catch (error) {
-      toast.error('Failed to refresh data', {
-        icon: <AlertCircle className="h-4 w-4" />
-      })
+      showErrorToast(ToastMessages.sync.error)
     }
   }
 
   const handleClearError = () => {
     clearError()
-    toast.info('Error cleared')
+    showInfoToast('Error cleared')
   }
 
   const getSyncStatusIcon = () => {
@@ -93,16 +97,34 @@ export function SyncStatusIndicator({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center">
-                {syncStatus.isOnline ? (
-                  <Wifi className="h-4 w-4 text-green-500" />
+              <div className="flex items-center relative">
+                {isClient ? (
+                  syncStatus.isOnline ? (
+                    <div className="relative">
+                      <Wifi className="h-4 w-4 text-green-500" />
+                      <PulseIndicator
+                        className="absolute -top-1 -right-1"
+                        color="bg-green-500"
+                        size={6}
+                      />
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <WifiOff className="h-4 w-4 text-red-500" />
+                      <PulseIndicator
+                        className="absolute -top-1 -right-1"
+                        color="bg-red-500"
+                        size={6}
+                      />
+                    </div>
+                  )
                 ) : (
-                  <WifiOff className="h-4 w-4 text-red-500" />
+                  <div className="h-4 w-4 bg-muted animate-pulse rounded" />
                 )}
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{syncStatus.isOnline ? 'Online' : 'Offline'}</p>
+              <p>{isClient ? (syncStatus.isOnline ? 'Online' : 'Offline') : 'Loading...'}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -146,18 +168,25 @@ export function SyncStatusIndicator({
     <div className="flex items-center space-x-3">
       {/* Connection status badge */}
       <Badge 
-        variant={syncStatus.isOnline ? 'default' : 'destructive'}
+        variant={isClient ? (syncStatus.isOnline ? 'default' : 'destructive') : 'secondary'}
         className="flex items-center space-x-1"
       >
-        {syncStatus.isOnline ? (
-          <>
-            <Wifi className="h-3 w-3" />
-            <span>Online</span>
-          </>
+        {isClient ? (
+          syncStatus.isOnline ? (
+            <>
+              <Wifi className="h-3 w-3" />
+              <span>Online</span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="h-3 w-3" />
+              <span>Offline</span>
+            </>
+          )
         ) : (
           <>
-            <WifiOff className="h-3 w-3" />
-            <span>Offline</span>
+            <div className="h-3 w-3 bg-muted animate-pulse rounded" />
+            <span>Loading...</span>
           </>
         )}
       </Badge>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { toast } from 'sonner'
+import { showMilestoneToast } from '@/lib/utils/toast'
 import { triggerMilestoneConfetti } from '@/lib/utils/confetti'
 import { getMilestoneMessage, type ChartDataPoint } from '@/lib/utils/chart-helpers'
 
@@ -48,14 +48,7 @@ export function useMilestoneCelebrations({
           point.milestoneData!.kgLost
         )
 
-        toast.success(message, {
-          duration: 5000,
-          description: `Milestone achieved on ${point.displayDate}`,
-          action: {
-            label: '🎉',
-            onClick: () => triggerMilestoneConfetti()
-          }
-        })
+        showMilestoneToast(message, `Milestone achieved on ${point.displayDate}`)
       }, 100)
     })
   }, [chartData, enabled])
@@ -65,14 +58,7 @@ export function useMilestoneCelebrations({
     triggerMilestoneConfetti()
     
     const message = getMilestoneMessage(milestoneData.milestoneNumber, milestoneData.kgLost)
-    toast.success(message, {
-      duration: 5000,
-      description: `Milestone achieved on ${milestoneData.date}`,
-      action: {
-        label: '🎉',
-        onClick: () => triggerMilestoneConfetti()
-      }
-    })
+    showMilestoneToast(message, `Milestone achieved on ${milestoneData.date}`)
   }
 
   // Function to reset celebrated milestones (for testing)

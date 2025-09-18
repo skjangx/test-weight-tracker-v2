@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useCallback, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useCallback, useEffect, useState, ReactNode, useRef } from 'react'
 import { useAuth } from '@/lib/auth/context'
 import { supabase } from '@/lib/supabase/client'
 
@@ -31,9 +31,13 @@ export function SyncProvider({ children }: SyncProviderProps) {
     lastSynced: null,
     isSyncing: false,
     error: null,
-    isOnline: navigator.onLine,
+    isOnline: true, // Default to true for SSR, will be updated on client
     retryCount: 0
   })
+  
+  // Track if initial sync has been performed to prevent duplicate syncing
+  const initialSyncPerformed = useRef(false)
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Exponential backoff calculation
   const getBackoffDelay = (retryCount: number): number => {
@@ -60,7 +64,7 @@ export function SyncProvider({ children }: SyncProviderProps) {
 
       // Check for conflicts and sync goals
       const { data: serverGoals, error: goalError } = await supabase
-        .from('weight_goals')
+        .from('goals')
         .select('*')
         .eq('user_id', user.id)
         .order('updated_at', { ascending: false })
@@ -136,15 +140,14 @@ export function SyncProvider({ children }: SyncProviderProps) {
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
   }, [syncStatus.lastSynced])
 
-  // Initialize last synced time from localStorage
+  // Initialize last synced time from localStorage and set online status
   useEffect(() => {
     const savedLastSynced = localStorage.getItem('lastSynced')
-    if (savedLastSynced) {
-      setSyncStatus(prev => ({
-        ...prev,
-        lastSynced: new Date(savedLastSynced)
-      }))
-    }
+    setSyncStatus(prev => ({
+      ...prev,
+      lastSynced: savedLastSynced ? new Date(savedLastSynced) : null,
+      isOnline: navigator.onLine // Set actual online status on client
+    }))
   }, [])
 
   // Monitor online/offline status
@@ -170,22 +173,44 @@ export function SyncProvider({ children }: SyncProviderProps) {
     }
   }, [user, performSync])
 
-  // Hourly auto-sync
+  // Hourly auto-sync - only depends on user login
   useEffect(() => {
-    if (!user) return
-
-    // Initial sync after login
-    setTimeout(() => performSync(), 2000)
-
-    // Set up hourly sync interval
-    const interval = setInterval(() => {
-      if (syncStatus.isOnline && !syncStatus.isSyncing) {
-        performSync()
+    if (!user) {
+      // Clean up when user logs out
+      initialSyncPerformed.current = false
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current)
+        syncIntervalRef.current = null
       }
-    }, 60 * 60 * 1000) // 1 hour
+      return
+    }
 
-    return () => clearInterval(interval)
-  }, [user, performSync, syncStatus.isOnline, syncStatus.isSyncing])
+    // Perform initial sync only once per login
+    if (!initialSyncPerformed.current) {
+      initialSyncPerformed.current = true
+      setTimeout(() => performSync(), 2000)
+    }
+
+    // Set up hourly sync interval only if not already set
+    if (!syncIntervalRef.current) {
+      syncIntervalRef.current = setInterval(() => {
+        // Check current sync status before triggering
+        setSyncStatus(currentStatus => {
+          if (currentStatus.isOnline && !currentStatus.isSyncing) {
+            performSync()
+          }
+          return currentStatus
+        })
+      }, 60 * 60 * 1000) // 1 hour
+    }
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current)
+        syncIntervalRef.current = null
+      }
+    }
+  }, [user, performSync]) // Only depend on user and performSync
 
   const value: SyncContextType = {
     syncStatus,

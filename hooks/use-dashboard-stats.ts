@@ -37,18 +37,25 @@ export function useDashboardStats() {
           .eq('user_id', user.id)
           .eq('is_active', true)
 
-        // Fetch current streak (simplified - just get latest active streak)
-        const { data: streakData } = await supabase
-          .from('streaks')
-          .select('current_count')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
+        // Fetch current streak from user profile (handle case where user profile doesn't exist)
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('current_streak')
+          .eq('id', user.id)
           .single()
+
+        // If user profile doesn't exist, use default streak of 0
+        let dayStreak = 0
+        if (!userError && userData) {
+          dayStreak = userData.current_streak || 0
+        } else if (userError?.code !== 'PGRST116') {
+          console.warn('User profile not found, using default streak:', userError?.message)
+        }
 
         const newStats = {
           weightEntries: weightEntriesCount || 0,
           activeGoals: activeGoalsCount || 0,
-          dayStreak: streakData?.current_count || 0
+          dayStreak
         }
         
         console.log('Dashboard stats updated:', newStats)
@@ -105,13 +112,13 @@ export function useDashboardStats() {
         .subscribe(),
 
       supabase
-        .channel('streaks_changes')
+        .channel('users_changes')
         .on('postgres_changes', 
           { 
             event: '*', 
             schema: 'public', 
-            table: 'streaks',
-            filter: `user_id=eq.${user?.id}` 
+            table: 'users',
+            filter: `id=eq.${user?.id}` 
           }, 
           fetchStats
         )
