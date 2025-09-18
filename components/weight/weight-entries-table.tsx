@@ -32,6 +32,7 @@ interface ProcessedEntry extends WeightEntry {
   entryCount: number
   weights: number[]
   memos: string[]
+  entries?: WeightEntry[]
   dailyChange?: number
   dailyChangePercent?: number
   movingAvgChange?: number
@@ -283,7 +284,7 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
   const handleRowClick = (entry: ProcessedEntry) => {
     // For averaged entries, find the most recent individual entry for that date
     if (entry.isAveraged && entry.entries) {
-      const mostRecentEntry = entry.entries.sort((a, b) => 
+      const mostRecentEntry = entry.entries.sort((a: WeightEntry, b: WeightEntry) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )[0]
       setSelectedEntry(mostRecentEntry)

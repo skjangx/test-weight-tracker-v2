@@ -5,7 +5,7 @@ import { loginWithTestUser } from './test-utils'
  * Global setup for visual regression tests
  * Ensures consistent test environment and pre-authentication
  */
-async function globalSetup(config: FullConfig) {
+async function globalSetup(_config: FullConfig) {
   const browser = await chromium.launch()
   const context = await browser.newContext()
   const page = await context.newPage()

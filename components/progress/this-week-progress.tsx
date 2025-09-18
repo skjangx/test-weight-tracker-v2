@@ -15,6 +15,7 @@ import {
   Activity
 } from 'lucide-react'
 import { format, startOfWeek, endOfWeek } from 'date-fns'
+import type { WeightEntry } from '@/lib/schemas/weight-entry'
 
 /**
  * This Week's Progress Card
@@ -22,7 +23,7 @@ import { format, startOfWeek, endOfWeek } from 'date-fns'
  */
 export function ThisWeekProgress() {
   const { stats, loading: statsLoading } = useDashboardStats()
-  const { currentWeight, weightEntries, loading: dataLoading } = useWeightData()
+  const { currentWeight, entries: weightEntries, loading: dataLoading } = useWeightData()
 
   const loading = statsLoading || dataLoading
 
@@ -43,7 +44,7 @@ export function ThisWeekProgress() {
     const weekEnd = endOfWeek(now, { weekStartsOn: 1 })
 
     // Filter entries for this week
-    const thisWeekEntries = weightEntries.filter(entry => {
+    const thisWeekEntries = weightEntries.filter((entry: WeightEntry) => {
       const entryDate = new Date(entry.date)
       return entryDate >= weekStart && entryDate <= weekEnd
     })
@@ -61,7 +62,7 @@ export function ThisWeekProgress() {
     }
 
     // Sort by date
-    const sortedEntries = thisWeekEntries.sort((a, b) =>
+    const sortedEntries = thisWeekEntries.sort((a: WeightEntry, b: WeightEntry) =>
       new Date(a.date).getTime() - new Date(b.date).getTime()
     )
 
@@ -69,10 +70,10 @@ export function ThisWeekProgress() {
     const lastWeight = sortedEntries[sortedEntries.length - 1].weight
     const weeklyChange = lastWeight - firstWeight
 
-    const weeklyAverage = thisWeekEntries.reduce((sum, entry) => sum + entry.weight, 0) / thisWeekEntries.length
+    const weeklyAverage = thisWeekEntries.reduce((sum: number, entry: WeightEntry) => sum + entry.weight, 0) / thisWeekEntries.length
 
     // Find best day (lowest weight this week)
-    const bestEntry = thisWeekEntries.reduce((best, entry) =>
+    const bestEntry = thisWeekEntries.reduce((best: WeightEntry, entry: WeightEntry) =>
       entry.weight < best.weight ? entry : best
     )
     const bestDay = format(new Date(bestEntry.date), 'EEEE')

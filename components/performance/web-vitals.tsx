@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import type { CLSMetric, FCPMetric, FIDMetric, LCPMetric, TTFBMetric } from 'web-vitals'
+import type { CLSMetric, FCPMetric, INPMetric, LCPMetric, TTFBMetric } from 'web-vitals'
 
 /**
  * Web Vitals monitoring component
@@ -22,7 +22,7 @@ export function WebVitals() {
       return connection.effectiveType || 'unknown'
     }
 
-    function sendToAnalytics(metric: CLSMetric | FCPMetric | FIDMetric | LCPMetric | TTFBMetric) {
+    function sendToAnalytics(metric: CLSMetric | FCPMetric | INPMetric | LCPMetric | TTFBMetric) {
       const analyticsId = process.env.NEXT_PUBLIC_VERCEL_ANALYTICS_ID
 
       const body = {
@@ -78,10 +78,10 @@ export function WebVitals() {
     }
 
     // Dynamic import to reduce bundle size
-    import('web-vitals').then(({ onCLS, onFCP, onFID, onLCP, onTTFB }) => {
+    import('web-vitals').then(({ onCLS, onFCP, onINP, onLCP, onTTFB }) => {
       onCLS(sendToAnalytics)
       onFCP(sendToAnalytics)
-      onFID(sendToAnalytics)
+      onINP(sendToAnalytics)
       onLCP(sendToAnalytics)
       onTTFB(sendToAnalytics)
     }).catch(() => {

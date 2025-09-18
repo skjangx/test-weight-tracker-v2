@@ -15,6 +15,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog'
 import {
   Form,
@@ -37,13 +38,19 @@ import { supabase } from '@/lib/supabase/client'
 import { WeightHelpTooltip } from '@/components/help/help-tooltip'
 
 interface AddWeightDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   onSuccess?: () => void
+  trigger?: React.ReactNode
 }
 
-export function AddWeightDialog({ open, onOpenChange, onSuccess }: AddWeightDialogProps) {
+export function AddWeightDialog({ open, onOpenChange, onSuccess, trigger }: AddWeightDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+
+  // Use internal state if no external control provided
+  const isOpen = open !== undefined ? open : internalOpen
+  const setIsOpen = onOpenChange || setInternalOpen
 
   const form = useForm<WeightEntryInput>({
     resolver: zodResolver(weightEntrySchema),
@@ -97,7 +104,7 @@ export function AddWeightDialog({ open, onOpenChange, onSuccess }: AddWeightDial
       
       onSuccess?.()
       form.reset()
-      onOpenChange(false)
+      setIsOpen(false)
     } catch (error) {
       console.error('Error:', error)
       showErrorToast(ToastMessages.general.saveError)
@@ -107,7 +114,8 @@ export function AddWeightDialog({ open, onOpenChange, onSuccess }: AddWeightDial
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent className="sm:max-w-[425px]" data-testid="add-weight-modal">
         <DialogHeader>
           <DialogTitle>Add Weight Entry</DialogTitle>
@@ -208,7 +216,7 @@ export function AddWeightDialog({ open, onOpenChange, onSuccess }: AddWeightDial
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={() => setIsOpen(false)}
               >
                 Cancel
               </Button>

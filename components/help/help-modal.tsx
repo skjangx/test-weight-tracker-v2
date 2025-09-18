@@ -199,28 +199,19 @@ export function HelpModal() {
         </Button>
       </DialogTrigger>
       <DialogContent
-        className="max-w-4xl max-h-[95vh] p-0 overflow-hidden"
+        className="max-w-[95vw] sm:max-w-2xl lg:max-w-4xl h-[90vh] max-h-[90vh] p-0 overflow-hidden flex flex-col"
         onKeyDown={handleKeyDown}
-        aria-describedby="help-description"
       >
-        <DialogHeader className="p-6 pb-4 border-b">
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <HelpCircle className="h-5 w-5 text-primary" />
-            <span>Weight Tracker Help</span>
-          </DialogTitle>
-          <DialogDescription id="help-description" className="text-base">
-            Everything you need to know about tracking your weight effectively. Navigate through topics using the buttons below, or use Tab and Arrow keys for keyboard navigation.
-          </DialogDescription>
-        </DialogHeader>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 border-b bg-background flex-none h-10">
+          <HelpCircle className="h-3.5 w-3.5 text-primary flex-none" />
+          <span className="text-sm font-semibold">Help</span>
+        </div>
 
-        <div className="flex flex-col lg:flex-row overflow-hidden">
-          {/* Mobile-First Navigation */}
-          <div className="lg:w-80 border-r bg-muted/30">
-            <div className="p-4">
-              <h3 className="font-semibold text-sm text-muted-foreground mb-3 uppercase tracking-wide">
-                Topics
-              </h3>
-              <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible">
+        <div className="flex flex-col lg:flex-row overflow-hidden flex-1">
+          {/* Compact Navigation */}
+          <div className="lg:w-52 lg:border-r bg-muted/30">
+            <div className="p-1.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-col gap-1">
                 {helpSections.map((section) => {
                   const Icon = section.icon
                   const isSelected = selectedSection === section.id
@@ -230,9 +221,9 @@ export function HelpModal() {
                       variant={isSelected ? "default" : "ghost"}
                       size="lg"
                       className={`
-                        w-full lg:w-auto whitespace-nowrap lg:whitespace-normal lg:justify-start text-left h-auto p-4 min-h-[44px]
+                        justify-start text-left h-auto p-1.5 lg:p-2 min-h-[36px] flex-col lg:flex-row
                         ${isSelected
-                          ? "bg-primary text-primary-foreground shadow-md"
+                          ? "bg-primary text-primary-foreground shadow-sm"
                           : "hover:bg-muted focus:bg-muted"
                         }
                       `}
@@ -246,12 +237,9 @@ export function HelpModal() {
                       aria-selected={isSelected}
                       role="tab"
                     >
-                      <Icon className="h-5 w-5 lg:mr-3 shrink-0" />
-                      <div className="hidden lg:block">
-                        <div className="font-semibold text-sm">{section.title}</div>
-                        <div className={`text-xs mt-1 ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
-                          {section.description}
-                        </div>
+                      <Icon className="h-3.5 w-3.5 lg:mr-1.5 shrink-0 mb-0.5 lg:mb-0" />
+                      <div className="text-center lg:text-left">
+                        <div className="font-medium text-xs leading-tight">{section.title}</div>
                       </div>
                     </Button>
                   )
@@ -263,40 +251,27 @@ export function HelpModal() {
           {/* Enhanced Content Area */}
           <div className="flex-1 overflow-y-auto" role="tabpanel">
             {currentSection && (
-              <div className="p-6 space-y-8">
-                {/* Section Header */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <currentSection.icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold tracking-tight">{currentSection.title}</h2>
-                      <p className="text-muted-foreground text-lg">{currentSection.description}</p>
-                    </div>
-                  </div>
-                </div>
-
+              <div className="p-2.5 space-y-3">
                 {/* Content Sections */}
-                <div className="space-y-8">
+                <div className="space-y-4">
                   {currentSection.content.map((item, index) => (
-                    <div key={index} className="space-y-4">
-                      <div className="space-y-2">
-                        <h3 className="text-2xl font-semibold text-foreground">{item.subtitle}</h3>
-                        <p className="text-base leading-relaxed text-muted-foreground">{item.text}</p>
+                    <div key={index} className="space-y-2">
+                      <div className="space-y-1">
+                        <h3 className="text-base font-semibold text-foreground">{item.subtitle}</h3>
+                        <p className="text-sm leading-snug text-muted-foreground">{item.text}</p>
                       </div>
 
                       {item.tips && (
-                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-                          <div className="flex items-center gap-2 mb-3">
-                            <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            <span className="font-semibold text-blue-800 dark:text-blue-200">Pro Tips</span>
+                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded p-2.5 border border-blue-200 dark:border-blue-800">
+                          <div className="flex items-center gap-1 mb-1.5">
+                            <Info className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                            <span className="font-medium text-xs text-blue-800 dark:text-blue-200">Tips</span>
                           </div>
-                          <ul className="space-y-2">
+                          <ul className="space-y-1">
                             {item.tips.map((tip, tipIndex) => (
-                              <li key={tipIndex} className="flex items-start gap-2 text-sm text-blue-700 dark:text-blue-300">
-                                <span className="text-blue-500 mt-1">•</span>
-                                <span>{tip}</span>
+                              <li key={tipIndex} className="flex items-start gap-1 text-xs text-blue-700 dark:text-blue-300">
+                                <span className="text-blue-500 mt-0.5 text-[10px]">•</span>
+                                <span className="leading-snug">{tip}</span>
                               </li>
                             ))}
                           </ul>

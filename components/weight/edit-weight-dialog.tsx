@@ -159,7 +159,7 @@ export function EditWeightDialog({ open, onOpenChange, entry, onSuccess }: EditW
       setShowDeleteConfirm(false)
     } catch (error) {
       console.error('Error:', error)
-      toast.error('Failed to delete entry. Please try again.')
+      showErrorToast('Failed to delete entry. Please try again.')
     } finally {
       setIsLoading(false)
     }
