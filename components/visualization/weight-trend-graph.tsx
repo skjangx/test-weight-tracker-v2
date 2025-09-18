@@ -70,7 +70,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
         
         {movingAverage && (
           <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">7-day avg:</span>
+            <span className="text-muted-foreground">7-entry avg:</span>
             <span className="font-medium">{formatWeight(movingAverage)}</span>
           </div>
         )}
@@ -78,7 +78,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
         {change !== 0 && (
           <>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Change from previous:</span>
+              <span className="text-muted-foreground">Change from before:</span>
               <span className={`font-medium ${getChangeColor(change)}`}>
                 {formatWeightChange(change)}
               </span>
@@ -425,7 +425,7 @@ export function WeightTrendGraph() {
                   strokeDasharray="5 5"
                   dot={false}
                   activeDot={{ r: 3, stroke: "#64748b", strokeWidth: 2 }}
-                  name="7-day average"
+                  name="7-entry average"
                 />
               )}
             </ComposedChart>
@@ -448,7 +448,7 @@ export function WeightTrendGraph() {
             {config.showMovingAverage && (
               <div className="flex items-center space-x-1">
                 <div className="w-3 h-0.5 bg-gray-500 border-dashed border-t"></div>
-                <span>7-day average</span>
+                <span>7-entry average</span>
               </div>
             )}
             {activeGoal && (
