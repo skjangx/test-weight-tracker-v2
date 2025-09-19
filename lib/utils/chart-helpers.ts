@@ -72,9 +72,18 @@ export function transformToChartData(
       changePercent = (change / prevEntry.weight) * 100
     }
 
+    const entryDate = parseISO(entry.date)
+    const currentYear = new Date().getFullYear()
+    const entryYear = entryDate.getFullYear()
+
+    // Include year in display if it's not the current year
+    const displayDate = entryYear === currentYear
+      ? format(entryDate, 'MMM dd')
+      : format(entryDate, 'MMM dd, yyyy')
+
     return {
       date: entry.date,
-      displayDate: format(parseISO(entry.date), 'MMM dd'),
+      displayDate,
       weight: entry.weight,
       change,
       changePercent,
@@ -170,14 +179,20 @@ export function getMilestoneMessage(milestoneNumber: number, kgLost: number): st
 /**
  * Format weight for display
  */
-export function formatWeight(weight: number): string {
+export function formatWeight(weight: number | undefined | null): string {
+  if (weight == null || isNaN(weight)) {
+    return 'N/A'
+  }
   return `${weight.toFixed(1)} kg`
 }
 
 /**
  * Format weight change for display
  */
-export function formatWeightChange(change: number, showSign = true): string {
+export function formatWeightChange(change: number | undefined | null, showSign = true): string {
+  if (change == null || isNaN(change)) {
+    return 'N/A'
+  }
   const sign = change > 0 ? '+' : ''
   const prefix = showSign ? sign : ''
   return `${prefix}${change.toFixed(1)} kg`
@@ -186,7 +201,10 @@ export function formatWeightChange(change: number, showSign = true): string {
 /**
  * Format percentage change for display
  */
-export function formatPercentChange(percent: number, showSign = true): string {
+export function formatPercentChange(percent: number | undefined | null, showSign = true): string {
+  if (percent == null || isNaN(percent)) {
+    return 'N/A'
+  }
   const sign = percent > 0 ? '+' : ''
   const prefix = showSign ? sign : ''
   return `${prefix}${percent.toFixed(1)}%`
@@ -245,7 +263,7 @@ export function getOptimalTickCount(
  * Default chart configuration
  */
 export const defaultChartConfig: ChartConfig = {
-  period: '30d',
+  period: 'all',
   showMovingAverage: true,
   showGoalLine: true,
   movingAverageDays: 7

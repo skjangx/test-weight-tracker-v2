@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Target, Calendar, TrendingDown, Pencil, Flame, Trophy, History, Plus } from 'lucide-react'
+import { Target, Calendar, TrendingDown, Pencil, Trophy, History, Plus } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/auth/context'
-import { format, differenceInDays, subDays, parseISO } from 'date-fns'
+import { format, differenceInDays, subDays } from 'date-fns'
 import { GoalUpdateModal } from './goal-update-modal'
 import { GoalCreationModal } from './goal-creation-modal'
 import { GoalHistorySheet } from './goal-history-sheet'
@@ -31,7 +31,6 @@ interface WeightEntry {
 export function ActiveGoalDisplay() {
   const [activeGoal, setActiveGoal] = useState<Goal | null>(null)
   const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([])
-  const [currentStreak, setCurrentStreak] = useState(0)
   const [loading, setLoading] = useState(true)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [historyModalOpen, setHistoryModalOpen] = useState(false)
@@ -72,25 +71,6 @@ export function ActiveGoalDisplay() {
             setWeightEntries(entriesData || [])
           }
 
-          // Fetch current streak from user profile (handle case where user profile doesn't exist)
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('current_streak')
-            .eq('id', user.id)
-            .single()
-
-          if (userError) {
-            if (userError.code === 'PGRST116') {
-              // User profile doesn't exist, use default streak of 0
-              console.warn('User profile not found, using default streak')
-              setCurrentStreak(0)
-            } else {
-              console.error('Error fetching user streak:', userError)
-              setCurrentStreak(0)
-            }
-          } else {
-            setCurrentStreak(userData?.current_streak || 0)
-          }
         }
       } catch (error) {
         console.error('Error fetching data:', error)
@@ -248,7 +228,7 @@ export function ActiveGoalDisplay() {
             </p>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+            <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <GoalCreationModal
                 trigger={
                   <Button className="flex-1" size="lg">
@@ -300,7 +280,6 @@ export function ActiveGoalDisplay() {
   }
   
   const currentWeight = getCurrentWeight()
-  const startWeight = weightEntries.length > 0 ? weightEntries[weightEntries.length - 1].weight : null
   const weightToLose = currentWeight ? Math.max(0, currentWeight - activeGoal.target_weight) : 0
   
   // Calculate 7-day weight trend for projection
@@ -349,7 +328,6 @@ export function ActiveGoalDisplay() {
   }
   
   const progressStatus = getProgressStatus()
-  const projectedDate = calculateProjectedDate()
   const isGoalAchieved = currentWeight && currentWeight <= activeGoal.target_weight
 
 
@@ -375,8 +353,8 @@ export function ActiveGoalDisplay() {
       <CardContent>
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0 mt-1">
                 <TrendingDown className="h-5 w-5 text-green-500" />
               </div>
               <div>
@@ -387,8 +365,8 @@ export function ActiveGoalDisplay() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0 mt-1">
                 <Calendar className="h-5 w-5 text-blue-500" />
               </div>
               <div>
@@ -397,7 +375,7 @@ export function ActiveGoalDisplay() {
                   {format(new Date(activeGoal.deadline), 'MMM dd, yyyy')}
                 </p>
                 <p className={`text-sm ${isOverdue ? 'text-red-500' : 'text-muted-foreground'}`} data-testid="days-remaining">
-                  {isOverdue 
+                  {isOverdue
                     ? `${Math.abs(daysRemaining)} days overdue`
                     : `${daysRemaining} days remaining`
                   }
@@ -454,29 +432,11 @@ export function ActiveGoalDisplay() {
               </div>
             </div>
 
-            {/* Current Streak - Only show if streak > 0 */}
-            {currentStreak > 0 && (
-              <>
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <Flame className="h-4 w-4 text-red-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">Streak</p>
-                    <p className="text-sm font-semibold" data-testid="current-streak">
-                      🔥 {currentStreak} day streak
-                    </p>
-                  </div>
-                </div>
-                {/* Empty div to maintain grid alignment */}
-                <div></div>
-              </>
-            )}
           </div>
 
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <Button
               variant="outline"
               size="sm"
@@ -499,7 +459,7 @@ export function ActiveGoalDisplay() {
             </Button>
           </div>
 
-          <div className="pt-4 border-t">
+          <div className="pt-3">
             <p className="text-xs text-muted-foreground">
               Goal created on {format(new Date(activeGoal.created_at), 'MMM dd, yyyy')}
             </p>
@@ -571,6 +531,64 @@ export function ProjectionBanner() {
     }
 
     fetchData()
+
+    // Listen for goal creation and update events
+    const handleGoalUpdated = () => {
+      console.log('Goal update event received in ProjectionBanner, refreshing data')
+      fetchData()
+    }
+
+    const handleWeightEntryUpdated = () => {
+      console.log('Weight entry updated event received in ProjectionBanner, refreshing data')
+      fetchData()
+    }
+
+    window.addEventListener('goalCreated', handleGoalUpdated)
+    window.addEventListener('goalUpdated', handleGoalUpdated)
+    window.addEventListener('weightEntryCreated', handleWeightEntryUpdated)
+    window.addEventListener('weightEntryUpdated', handleWeightEntryUpdated)
+
+    // Set up real-time subscriptions for goal and weight entry changes
+    const goalsChannel = supabase
+      .channel('projection_goals_changes')
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'goals',
+          filter: `user_id=eq.${user?.id}`
+        },
+        (payload) => {
+          console.log('ProjectionBanner: Goals real-time change detected:', payload)
+          fetchData()
+        }
+      )
+      .subscribe()
+
+    const weightEntriesChannel = supabase
+      .channel('projection_weight_entries_changes')
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'weight_entries',
+          filter: `user_id=eq.${user?.id}`
+        },
+        (payload) => {
+          console.log('ProjectionBanner: Weight entries real-time change detected:', payload)
+          fetchData()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      window.removeEventListener('goalCreated', handleGoalUpdated)
+      window.removeEventListener('goalUpdated', handleGoalUpdated)
+      window.removeEventListener('weightEntryCreated', handleWeightEntryUpdated)
+      window.removeEventListener('weightEntryUpdated', handleWeightEntryUpdated)
+      supabase.removeChannel(goalsChannel)
+      supabase.removeChannel(weightEntriesChannel)
+    }
   }, [user])
 
   // Calculate current weight
@@ -635,28 +653,30 @@ export function ProjectionBanner() {
 
   return (
     <div className="w-full mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-      <div className="max-w-6xl mx-auto flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-          <div>
-            <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start space-x-3 flex-1">
+          <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-1">
               Projected Goal Date
             </p>
-            <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
+            <p className="text-xl font-bold text-blue-900 dark:text-blue-100 leading-tight">
               {format(new Date(projectedDate), 'EEEE, MMMM do, yyyy')}
             </p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Days to goal</p>
-          <p className="text-xl font-bold text-blue-900 dark:text-blue-100">
+        <div className="text-right flex-shrink-0">
+          <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">Days to goal</p>
+          <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
             {differenceInDays(new Date(projectedDate), new Date())}
           </p>
         </div>
       </div>
-      <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 text-center">
-        Based on your 7-day weight loss trend
-      </p>
+      <div className="mt-3 pt-3 border-t border-blue-200/50 dark:border-blue-700/50">
+        <p className="text-xs text-blue-600 dark:text-blue-400 text-center">
+          Based on your 7-day weight loss trend
+        </p>
+      </div>
     </div>
   )
 }

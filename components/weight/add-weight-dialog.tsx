@@ -47,6 +47,7 @@ interface AddWeightDialogProps {
 export function AddWeightDialog({ open, onOpenChange, onSuccess, trigger }: AddWeightDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [internalOpen, setInternalOpen] = useState(false)
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
 
   // Use internal state if no external control provided
   const isOpen = open !== undefined ? open : internalOpen
@@ -139,8 +140,6 @@ export function AddWeightDialog({ open, onOpenChange, onSuccess, trigger }: AddW
                       placeholder="Enter your weight"
                       type="number"
                       step="0.1"
-                      min="30"
-                      max="300"
                       {...field}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -160,7 +159,7 @@ export function AddWeightDialog({ open, onOpenChange, onSuccess, trigger }: AddW
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Date</FormLabel>
-                  <Popover>
+                  <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
@@ -183,7 +182,10 @@ export function AddWeightDialog({ open, onOpenChange, onSuccess, trigger }: AddW
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                          field.onChange(date)
+                          setDatePickerOpen(false)
+                        }}
                         disabled={(date) =>
                           date > new Date() || date < new Date('1900-01-01')
                         }

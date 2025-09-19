@@ -19,9 +19,11 @@ import { GoalHelpTooltip } from '@/components/help/help-tooltip'
 
 const goalSchema = z.object({
   targetWeight: z
-    .number()
-    .min(30, 'Weight must be between 30 and 300 kg')
-    .max(300, 'Weight must be between 30 and 300 kg'),
+    .string()
+    .min(1, 'Target weight is required')
+    .refine((val) => !isNaN(parseFloat(val)), 'Must be a valid number')
+    .refine((val) => parseFloat(val) >= 30, 'Weight must be between 30 and 300 kg')
+    .refine((val) => parseFloat(val) <= 300, 'Weight must be between 30 and 300 kg'),
   deadline: z
     .date()
     .refine(date => date > new Date(), 'Deadline must be in the future')
@@ -44,7 +46,7 @@ export function GoalCreationModal({ onGoalCreated, trigger }: GoalCreationModalP
     resolver: zodResolver(goalSchema),
     mode: 'onChange',
     defaultValues: {
-      targetWeight: 0,
+      targetWeight: '',
     }
   })
 
@@ -73,7 +75,7 @@ export function GoalCreationModal({ onGoalCreated, trigger }: GoalCreationModalP
       // Create new goal
       const goalData = {
         user_id: user.id,
-        target_weight: data.targetWeight,
+        target_weight: parseFloat(data.targetWeight),
         deadline: format(data.deadline, 'yyyy-MM-dd'),
         is_active: true
       }
@@ -145,7 +147,6 @@ export function GoalCreationModal({ onGoalCreated, trigger }: GoalCreationModalP
                       step="0.1"
                       placeholder="75.0"
                       {...field}
-                      onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
                     />
                   </FormControl>
                   <FormMessage />

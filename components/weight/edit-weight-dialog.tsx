@@ -45,6 +45,7 @@ import { showSuccessToast, showErrorToast, ToastMessages } from '@/lib/utils/toa
 import { weightEntrySchema, type WeightEntryInput } from '@/lib/schemas/weight-entry'
 import { supabase } from '@/lib/supabase/client'
 import type { WeightEntry } from '@/lib/schemas/weight-entry'
+import { WeightHelpTooltip } from '@/components/help/help-tooltip'
 
 interface EditWeightDialogProps {
   open: boolean
@@ -56,6 +57,7 @@ interface EditWeightDialogProps {
 export function EditWeightDialog({ open, onOpenChange, entry, onSuccess }: EditWeightDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
 
   const form = useForm<WeightEntryInput>({
     resolver: zodResolver(weightEntrySchema),
@@ -182,15 +184,22 @@ export function EditWeightDialog({ open, onOpenChange, entry, onSuccess }: EditW
                 name="weight"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Weight (kg)</FormLabel>
+                    <FormLabel className="flex items-center space-x-2">
+                      <span>Weight (kg)</span>
+                      <WeightHelpTooltip />
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Enter your weight"
                         type="number"
                         step="0.1"
-                        min="30"
-                        max="300"
                         {...field}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            form.handleSubmit(onSubmit)()
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -203,7 +212,7 @@ export function EditWeightDialog({ open, onOpenChange, entry, onSuccess }: EditW
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Date</FormLabel>
-                    <Popover>
+                    <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
@@ -226,7 +235,10 @@ export function EditWeightDialog({ open, onOpenChange, entry, onSuccess }: EditW
                         <Calendar
                           mode="single"
                           selected={field.value}
-                          onSelect={field.onChange}
+                          onSelect={(date) => {
+                            field.onChange(date)
+                            setDatePickerOpen(false)
+                          }}
                           disabled={(date) =>
                             date > new Date() || date < new Date('1900-01-01')
                           }

@@ -49,8 +49,6 @@ export function ThisWeekProgress() {
       return entryDate >= weekStart && entryDate <= weekEnd
     })
 
-    const daysLogged = thisWeekEntries.length
-
     if (thisWeekEntries.length === 0) {
       return {
         weeklyChange: 0,
@@ -61,22 +59,49 @@ export function ThisWeekProgress() {
       }
     }
 
-    // Sort by date
-    const sortedEntries = thisWeekEntries.sort((a: WeightEntry, b: WeightEntry) =>
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    )
+    // Group entries by date and calculate daily averages (same logic as weight entries table)
+    const groupedByDate = thisWeekEntries.reduce((acc, entry) => {
+      const date = entry.date
+      if (!acc[date]) {
+        acc[date] = []
+      }
+      acc[date].push(entry.weight)
+      return acc
+    }, {} as Record<string, number[]>)
 
-    const firstWeight = sortedEntries[0].weight
-    const lastWeight = sortedEntries[sortedEntries.length - 1].weight
+    // Calculate daily averages for each date
+    const dailyAverages = Object.entries(groupedByDate)
+      .map(([date, weights]) => ({
+        date,
+        weight: weights.reduce((sum, weight) => sum + weight, 0) / weights.length
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+    const daysLogged = dailyAverages.length
+
+    if (dailyAverages.length === 0) {
+      return {
+        weeklyChange: 0,
+        daysLogged: 0,
+        weeklyAverage: currentWeight || 0,
+        bestDay: null,
+        changeDirection: 'stable' as const
+      }
+    }
+
+    // Calculate weekly change using daily averages
+    const firstWeight = dailyAverages[0].weight
+    const lastWeight = dailyAverages[dailyAverages.length - 1].weight
     const weeklyChange = lastWeight - firstWeight
 
-    const weeklyAverage = thisWeekEntries.reduce((sum: number, entry: WeightEntry) => sum + entry.weight, 0) / thisWeekEntries.length
+    // Calculate overall weekly average
+    const weeklyAverage = dailyAverages.reduce((sum, day) => sum + day.weight, 0) / dailyAverages.length
 
-    // Find best day (lowest weight this week)
-    const bestEntry = thisWeekEntries.reduce((best: WeightEntry, entry: WeightEntry) =>
-      entry.weight < best.weight ? entry : best
+    // Find best day (lowest average weight this week)
+    const bestDay = dailyAverages.reduce((best, day) =>
+      day.weight < best.weight ? day : best
     )
-    const bestDay = format(new Date(bestEntry.date), 'EEEE')
+    const bestDayName = format(new Date(bestDay.date), 'EEEE')
 
     const changeDirection = weeklyChange < -0.1 ? 'down' : weeklyChange > 0.1 ? 'up' : 'stable'
 
@@ -84,7 +109,7 @@ export function ThisWeekProgress() {
       weeklyChange,
       daysLogged,
       weeklyAverage,
-      bestDay,
+      bestDay: bestDayName,
       changeDirection
     }
   }
@@ -100,7 +125,7 @@ export function ThisWeekProgress() {
   const getChangeColor = () => {
     if (weeklyStats.changeDirection === 'down') return 'text-green-600 dark:text-green-400'
     if (weeklyStats.changeDirection === 'up') return 'text-red-600 dark:text-red-400'
-    return 'text-blue-600 dark:text-blue-400'
+    return 'text-muted-foreground'
   }
 
   const getChangeText = () => {
@@ -139,7 +164,7 @@ export function ThisWeekProgress() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
-          <Calendar className="h-5 w-5 text-blue-500" />
+          <Calendar className="h-5 w-5 text-muted-foreground" />
           <span>This Week's Progress</span>
         </CardTitle>
       </CardHeader>
@@ -200,8 +225,8 @@ export function ThisWeekProgress() {
             ) : (
               <>
                 <div className="flex items-center space-x-2">
-                  <Target className="h-4 w-4 text-blue-500" />
-                  <span className="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-lg font-semibold text-muted-foreground">
                     Ready to start!
                   </span>
                 </div>

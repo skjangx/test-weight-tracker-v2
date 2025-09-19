@@ -80,7 +80,9 @@ export function RegisterForm() {
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <div className="h-5">
+                    <FormMessage />
+                  </div>
                 </FormItem>
               )}
             />
@@ -119,7 +121,9 @@ export function RegisterForm() {
                       </Button>
                     </div>
                   </FormControl>
-                  <FormMessage />
+                  <div className="h-5">
+                    <FormMessage />
+                  </div>
                 </FormItem>
               )}
             />
@@ -158,7 +162,9 @@ export function RegisterForm() {
                       </Button>
                     </div>
                   </FormControl>
-                  <FormMessage />
+                  <div className="h-5">
+                    <FormMessage />
+                  </div>
                 </FormItem>
               )}
             />

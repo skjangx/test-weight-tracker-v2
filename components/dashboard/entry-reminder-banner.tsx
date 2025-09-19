@@ -93,7 +93,7 @@ export function EntryReminderBanner({ onQuickAddClick }: EntryReminderBannerProp
           </div>
           <div>
             <p className="text-blue-800 dark:text-blue-200 font-medium">
-              Don't forget to log today's weight
+              Don&apos;t forget to log today&apos;s weight
             </p>
             <p className="text-blue-600 dark:text-blue-300 text-sm">
               Keep your tracking streak going!

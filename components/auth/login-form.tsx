@@ -74,7 +74,9 @@ export function LoginForm() {
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <div className="h-5">
+                    <FormMessage />
+                  </div>
                 </FormItem>
               )}
             />
@@ -114,7 +116,9 @@ export function LoginForm() {
                       </Button>
                     </div>
                   </FormControl>
-                  <FormMessage />
+                  <div className="h-5">
+                    <FormMessage />
+                  </div>
                 </FormItem>
               )}
             />

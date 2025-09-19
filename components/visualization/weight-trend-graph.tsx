@@ -71,53 +71,57 @@ const calculateYearDividers = (chartData: any[]) => {
   })
 }
 
-// Helper function to calculate trend projection (simple linear regression)
-const calculateTrendProjection = (chartData: any[], daysToProject: number = 30) => {
-  if (chartData.length < 3) return []
+// Helper function to calculate goal guideline path
+const calculateGoalGuideline = (chartData: any[], goalWeight?: number, goalDeadline?: string) => {
+  if (!goalWeight || !goalDeadline || chartData.length === 0) return []
 
-  // Use last 10 data points for trend calculation (or all if less than 10)
-  const recentData = chartData.slice(0, Math.min(10, chartData.length))
-
-  // Convert dates to numbers (days since first point) for regression
-  const firstDate = parseISO(recentData[recentData.length - 1].date)
-  const dataPoints = recentData.map(point => {
-    const date = parseISO(point.date)
-    const daysDiff = Math.floor((date.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24))
-    return { x: daysDiff, y: point.weight }
-  }).reverse() // Reverse to get chronological order
-
-  // Simple linear regression
-  const n = dataPoints.length
-  const sumX = dataPoints.reduce((sum, point) => sum + point.x, 0)
-  const sumY = dataPoints.reduce((sum, point) => sum + point.y, 0)
-  const sumXY = dataPoints.reduce((sum, point) => sum + point.x * point.y, 0)
-  const sumXX = dataPoints.reduce((sum, point) => sum + point.x * point.x, 0)
-
-  const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX)
-  const intercept = (sumY - slope * sumX) / n
-
-  // Generate projection points
-  const projectionPoints = []
-  const lastDataPoint = dataPoints[dataPoints.length - 1]
-  const lastDate = parseISO(chartData[0].date) // Most recent actual data point
-
-  for (let i = 1; i <= daysToProject; i++) {
-    const projectedDate = addDays(lastDate, i)
-    const daysSinceFirst = lastDataPoint.x + i
-    const projectedWeight = slope * daysSinceFirst + intercept
-
-    // Only project if trend makes sense (reasonable weight range)
-    if (projectedWeight > 40 && projectedWeight < 400) {
-      projectionPoints.push({
-        date: projectedDate.toISOString().split('T')[0],
-        displayDate: format(projectedDate, 'MMM dd'),
-        weight: Math.round(projectedWeight * 10) / 10, // Round to 1 decimal
-        isProjection: true
-      })
+  // chartData is sorted by date ASC (oldest first), so the LAST item is the most recent
+  // Find the most recent entry with weight data by iterating backwards
+  let lastDataPoint = null
+  for (let i = chartData.length - 1; i >= 0; i--) {
+    if (chartData[i].weight != null) {
+      lastDataPoint = chartData[i]
+      break
     }
   }
+  if (!lastDataPoint) return []
 
-  return projectionPoints
+  const currentWeight = lastDataPoint.weight
+  const currentDate = parseISO(lastDataPoint.date)
+  const deadlineDate = parseISO(goalDeadline)
+
+  // Calculate days from current weight to goal deadline
+  const daysToGoal = Math.floor((deadlineDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (daysToGoal <= 0) return [] // Goal deadline has passed
+
+  const weightDifference = goalWeight - currentWeight
+  const dailyWeightChange = weightDifference / daysToGoal
+
+  const guidelinePoints = []
+
+  // Start from the day AFTER the last actual weight entry to avoid overlap
+  const currentYear = new Date().getFullYear()
+
+  for (let i = 1; i <= daysToGoal; i++) {
+    const guidelineDate = addDays(currentDate, i)
+    const guidelineWeight = currentWeight + (dailyWeightChange * i)
+    const guidelineYear = guidelineDate.getFullYear()
+
+    // Include year in display if it's not the current year
+    const displayDate = guidelineYear === currentYear
+      ? format(guidelineDate, 'MMM dd')
+      : format(guidelineDate, 'MMM dd, yyyy')
+
+    guidelinePoints.push({
+      date: guidelineDate.toISOString().split('T')[0],
+      displayDate,
+      goalGuideline: Math.round(guidelineWeight * 10) / 10,
+      isGuideline: true
+    })
+  }
+
+  return guidelinePoints
 }
 
 interface CustomTooltipProps {
@@ -140,23 +144,31 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   const data = payload[0].payload
   const weight = data.weight
   const movingAverage = data.movingAverage
+  const goalGuideline = data.goalGuideline
   const change = data.change || 0
   const changePercent = data.changePercent || 0
 
   return (
     <div className="bg-background border border-border rounded-lg shadow-lg p-3 min-w-[200px]">
       <p className="font-semibold text-sm mb-2">{data.displayDate}</p>
-      
+
       <div className="space-y-1 text-xs">
         <div className="flex justify-between items-center">
           <span className="text-muted-foreground">Weight:</span>
           <span className="font-medium">{formatWeight(weight)}</span>
         </div>
-        
+
         {movingAverage && (
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">7-entry avg:</span>
             <span className="font-medium">{formatWeight(movingAverage)}</span>
+          </div>
+        )}
+
+        {goalGuideline && (
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Goal target:</span>
+            <span className="font-medium text-green-600 dark:text-green-400">{formatWeight(goalGuideline)}</span>
           </div>
         )}
         
@@ -205,24 +217,6 @@ const MilestoneDot = ({ cx, cy, fill, payload }: CustomDotProps) => {
   )
 }
 
-// Custom animated line component for trend line drawing effect
-const AnimatedLine = ({ points }: { points: string }) => {
-  return (
-    <motion.path
-      d={points}
-      fill="none"
-      stroke="#2563eb"
-      strokeWidth={2}
-      initial={{ pathLength: 0 }}
-      animate={{ pathLength: 1 }}
-      transition={{
-        duration: 1.5,
-        ease: "easeInOut",
-        delay: 0.5
-      }}
-    />
-  )
-}
 
 // Time period selector component (US-4.2)
 const TimePeriodSelector = ({ 
@@ -324,20 +318,49 @@ export function WeightTrendGraph() {
   // Calculate year dividers for multi-year spans
   const yearDividers = useMemo(() => calculateYearDividers(chartData), [chartData])
 
-  // Calculate trend projection
-  const trendProjection = useMemo(() => {
-    // Only show projection for "all time" view and when we have enough data
-    if (config.period === 'all' && chartData.length >= 3) {
-      return calculateTrendProjection(chartData, 30)
+  // Calculate goal guideline path
+  const goalGuideline = useMemo(() => {
+    // Only show guideline when we have a goal and we're in "all time" view
+    if (config.period === 'all' && activeGoal && chartData.length > 0) {
+      return calculateGoalGuideline(chartData, activeGoal.target_weight, activeGoal.deadline)
     }
     return []
-  }, [chartData, config.period])
+  }, [chartData, config.period, activeGoal])
 
-  // Combine actual data with projection for chart
+  // Combine actual data with guideline for chart (keep data separate for proper line rendering)
   const combinedChartData = useMemo(() => {
-    if (trendProjection.length === 0) return chartData
-    return [...chartData, ...trendProjection]
-  }, [chartData, trendProjection])
+    if (goalGuideline.length === 0) return chartData
+
+    // Create a map to merge data by date
+    const dataMap = new Map()
+
+    // First, add all actual weight data (these will always have weight values)
+    chartData.forEach(point => {
+      dataMap.set(point.date, { ...point })
+    })
+
+    // Then, add goal guideline data to existing dates or create new entries
+    goalGuideline.forEach(point => {
+      const existing = dataMap.get(point.date)
+      if (existing) {
+        // Add guideline to existing weight entry
+        dataMap.set(point.date, { ...existing, goalGuideline: point.goalGuideline })
+      } else {
+        // Create new entry with only guideline (no weight to avoid breaking line continuity)
+        dataMap.set(point.date, {
+          date: point.date,
+          displayDate: point.displayDate,
+          goalGuideline: point.goalGuideline,
+          isGuideline: true
+        })
+      }
+    })
+
+    // Convert back to array and sort by date
+    return Array.from(dataMap.values()).sort((a, b) =>
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    )
+  }, [chartData, goalGuideline])
 
   // Calculate trend direction
   const trendDirection = useMemo(() => {
@@ -444,6 +467,7 @@ export function WeightTrendGraph() {
         >
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
+              key={`chart-${config.period}-${chartData.length}`}
               data={combinedChartData}
               margin={{
                 top: 5,
@@ -519,6 +543,7 @@ export function WeightTrendGraph() {
                 stroke="none"
                 fill="url(#weightGradient)"
                 isAnimationActive={false}
+                connectNulls={false}
               />
 
               {/* Main weight line */}
@@ -531,6 +556,9 @@ export function WeightTrendGraph() {
                 activeDot={{ r: 4, stroke: "#2563eb", strokeWidth: 2 }}
                 name="Weight"
                 isAnimationActive={true}
+                animationDuration={1500}
+                animationEasing="ease-in-out"
+                connectNulls={false}
               />
 
               {/* Moving average line (US-4.3) */}
@@ -544,21 +572,35 @@ export function WeightTrendGraph() {
                   dot={false}
                   activeDot={{ r: 3, stroke: "#64748b", strokeWidth: 2 }}
                   name="7-entry average"
+                  isAnimationActive={true}
+                  animationDuration={1500}
+                  animationEasing="ease-in-out"
+                  animationDelay={200}
                 />
               )}
 
-              {/* Trend projection line */}
-              {trendProjection.length > 0 && (
+              {/* Goal guideline line */}
+              {goalGuideline.length > 0 && (
                 <Line
                   type="monotone"
-                  dataKey="weight"
-                  stroke="#f59e0b"
+                  dataKey="goalGuideline"
+                  stroke="#10b981"
                   strokeWidth={2}
-                  strokeDasharray="3 6"
+                  strokeDasharray="8 4"
                   dot={false}
-                  activeDot={{ r: 3, stroke: "#f59e0b", strokeWidth: 2 }}
-                  name="Trend projection"
+                  activeDot={{
+                    r: 3,
+                    stroke: "#10b981",
+                    strokeWidth: 2,
+                    fill: "#10b981"
+                  }}
+                  name="Goal guideline"
                   connectNulls={false}
+                  strokeOpacity={0.7}
+                  isAnimationActive={true}
+                  animationDuration={1500}
+                  animationEasing="ease-in-out"
+                  animationDelay={400}
                 />
               )}
             </ComposedChart>
@@ -596,10 +638,10 @@ export function WeightTrendGraph() {
                 <span>Goal weight</span>
               </div>
             )}
-            {trendProjection.length > 0 && (
+            {goalGuideline.length > 0 && (
               <div className="flex items-center space-x-1">
-                <div className="w-3 h-0.5 bg-amber-500 border-dashed border-t"></div>
-                <span>Trend projection</span>
+                <div className="w-3 h-0.5 border-dashed border-t-2 border-green-500"></div>
+                <span>Goal guideline</span>
               </div>
             )}
           </div>

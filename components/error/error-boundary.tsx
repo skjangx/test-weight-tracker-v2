@@ -50,7 +50,7 @@ Timestamp: ${new Date().toISOString()}
           </div>
           <CardTitle className="text-2xl">Something went wrong</CardTitle>
           <CardDescription>
-            We encountered an unexpected error. Don't worry, our team has been notified.
+            We encountered an unexpected error. Don&apos;t worry, our team has been notified.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

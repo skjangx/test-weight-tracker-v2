@@ -133,23 +133,28 @@ export function useWeightData(): UseWeightDataResult {
     }
   }, [user, fetchWeightEntries])
 
+  // Configuration update helpers (define early to avoid initialization issues)
+  const setConfig = useCallback((newConfig: Partial<ChartConfig>) => {
+    setConfigState(prev => ({ ...prev, ...newConfig }))
+  }, [])
+
   // Memoized processed data
   const processedData = (() => {
     // Filter by time period
     const filteredEntries = filterEntriesByPeriod(entries, config.period)
-    
+
     // Transform to chart data
     let chartData = transformToChartData(filteredEntries, config)
-    
-    // Add milestones if we have starting weight
-    const startingWeight = entries.length > 0 
-      ? Math.max(...entries.map(e => e.weight)) 
+
+    // Add milestones if we have starting weight (use chronologically first entry)
+    const startingWeight = filteredEntries.length > 0
+      ? filteredEntries[filteredEntries.length - 1].weight // Last item in filtered array is earliest by date (sorted desc)
       : undefined
-      
+
     if (startingWeight) {
       chartData = calculateMilestones(chartData, startingWeight)
     }
-    
+
     // Calculate additional moving average data if needed
     if (config.showMovingAverage && chartData.length > 1) {
       const weights = chartData.map(d => d.weight)
@@ -157,27 +162,22 @@ export function useWeightData(): UseWeightDataResult {
         windowSize: config.movingAverageDays,
         type: 'sma'
       })
-      
+
       chartData = chartData.map((point, index) => ({
         ...point,
         movingAverage: movingAverages[index]
       }))
     }
-    
+
     return {
       chartData,
       startingWeight,
       currentWeight: filteredEntries[0]?.weight,
-      totalWeightLost: startingWeight && filteredEntries[0]?.weight 
-        ? startingWeight - filteredEntries[0].weight 
+      totalWeightLost: startingWeight && filteredEntries[0]?.weight
+        ? startingWeight - filteredEntries[0].weight
         : undefined
     }
   })()
-
-  // Configuration update helpers
-  const setConfig = useCallback((newConfig: Partial<ChartConfig>) => {
-    setConfigState(prev => ({ ...prev, ...newConfig }))
-  }, [])
 
   const setPeriod = useCallback((period: TimePeriod) => {
     setConfig({ period })
@@ -191,6 +191,17 @@ export function useWeightData(): UseWeightDataResult {
     const clampedDays = Math.max(2, Math.min(14, days))
     setConfig({ movingAverageDays: clampedDays })
   }, [setConfig])
+
+  // Auto-fallback effect: update config when no data in period but entries exist
+  useEffect(() => {
+    if (entries.length > 0 && config.period !== 'all') {
+      const filteredEntries = filterEntriesByPeriod(entries, config.period)
+      if (filteredEntries.length === 0) {
+        // Automatically switch to 'all' time period when no data in current period
+        setConfig({ period: 'all' })
+      }
+    }
+  }, [entries, config.period, setConfig])
 
   return {
     // Data

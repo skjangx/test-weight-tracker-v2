@@ -2,10 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import { useAuth } from '@/lib/auth/context'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { GoalCreationModal } from '@/components/goals/goal-creation-modal'
 import { ActiveGoalDisplay, ProjectionBanner } from '@/components/goals/active-goal-display'
 import { GoalHistorySheet } from '@/components/goals/goal-history-sheet'
 import { AddWeightDialog } from '@/components/weight/add-weight-dialog'
@@ -13,33 +10,31 @@ import { WeightEntriesTable, type WeightEntriesTableRef } from '@/components/wei
 import { EntryReminderBanner } from '@/components/dashboard/entry-reminder-banner'
 import { WeightTrendGraph } from '@/components/visualization/weight-trend-graph'
 import { MilestoneTracker } from '@/components/effects/confetti-celebration'
-import { WeeklySummaryCard } from '@/components/progress/weekly-summary-card'
 import { TrendAnalysis } from '@/components/progress/trend-analysis'
 import { ThisWeekProgress } from '@/components/progress/this-week-progress'
 import { SyncStatusIndicator } from '@/components/sync/sync-status-indicator'
 import { WelcomeModal } from '@/components/welcome/welcome-modal'
 import { DashboardErrorBoundary, ChartErrorBoundary } from '@/components/error/error-boundary'
 import { HelpModal } from '@/components/help/help-modal'
-import { StreakHelpTooltip, SyncHelpTooltip } from '@/components/help/help-tooltip'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useDashboardStats } from '@/hooks/use-dashboard-stats'
 import { useWeightData } from '@/hooks/use-weight-data'
 import { useFirstVisit } from '@/hooks/use-first-visit'
 import { useDashboardPerformance } from '@/hooks/use-performance'
-import { Skeleton } from '@/components/ui/skeleton'
-import { FadeIn, SlideIn, StaggeredChildren, AnimatedButton, AnimatedCard, CountUp } from '@/components/ui/animated-components'
-import { DashboardStatsCardSkeleton, GoalCardSkeleton, WeightChartSkeleton, WeightTableSkeleton, DashboardLayoutSkeleton } from '@/components/skeletons/enhanced-skeletons'
-import { LogOut, User, TrendingDown, History, Plus } from 'lucide-react'
+import { useStreak } from '@/hooks/use-streak'
+import { FadeIn, SlideIn, AnimatedButton } from '@/components/ui/animated-components'
+import { LogOut } from 'lucide-react'
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth()
-  const { stats, loading: statsLoading } = useDashboardStats()
+  const { logout } = useAuth()
+  const { loading: statsLoading } = useDashboardStats()
   const { startingWeight, currentWeight } = useWeightData()
   const { isFirstVisit, loading: firstVisitLoading, markWelcomeCompleted } = useFirstVisit()
   const { trackPageLoad } = useDashboardPerformance()
+  // Initialize streak tracking to ensure data is updated
+  useStreak()
   const [goalHistoryOpen, setGoalHistoryOpen] = useState(false)
   const [addWeightOpen, setAddWeightOpen] = useState(false)
-  const [isPageLoaded, setIsPageLoaded] = useState(false)
   const weightEntriesTableRef = useRef<WeightEntriesTableRef>(null)
 
   // Track dashboard loading performance
@@ -48,7 +43,6 @@ export default function DashboardPage() {
   // Mark page as loaded when all critical data is ready
   useEffect(() => {
     if (!statsLoading && !firstVisitLoading) {
-      setIsPageLoaded(true)
       endPageLoadTracking()
     }
   }, [statsLoading, firstVisitLoading, endPageLoadTracking])
@@ -78,7 +72,8 @@ export default function DashboardPage() {
         {/* Optimized Header */}
         <FadeIn>
           <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container flex h-16 items-center justify-between px-4">
+            <div className="container mx-auto flex h-16 items-center justify-between px-4 max-w-7xl">
+              {/* Left Section - Branding */}
               <SlideIn direction="left" delay={100}>
                 <div className="flex items-center gap-3">
                   <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
@@ -88,56 +83,30 @@ export default function DashboardPage() {
                 </div>
               </SlideIn>
 
+              {/* Right Section - Actions */}
               <SlideIn direction="right" delay={200}>
-                <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
-                  {/* User Welcome - More responsive */}
+                <div className="flex items-center gap-3">
+                  {/* Sync Status */}
                   <FadeIn delay={300}>
-                    <div className="hidden xl:flex items-center gap-2 text-sm text-muted-foreground mr-1">
-                      <User className="h-4 w-4" />
-                      <span>Welcome, {user?.email?.split('@')[0]}!</span>
-                    </div>
-                  </FadeIn>
-
-                  {/* Primary Action */}
-                  <FadeIn delay={350}>
-                    <AddWeightDialog
-                      onSuccess={() => weightEntriesTableRef.current?.refreshEntries()}
-                      trigger={
-                        <AnimatedButton
-                          size="sm"
-                          className="flex items-center gap-1.5 shrink-0"
-                          hoverScale
-                          pressEffect
-                          data-testid="add-weight-header"
-                        >
-                          <Plus className="h-4 w-4" />
-                          <span className="hidden sm:inline">Add Weight</span>
-                        </AnimatedButton>
-                      }
-                    />
-                  </FadeIn>
-
-                  {/* Sync Status - Hide on smallest screens */}
-                  <FadeIn delay={400}>
-                    <div className="hidden sm:block">
+                    <div className="hidden md:block">
                       <SyncStatusIndicator compact />
                     </div>
                   </FadeIn>
 
-                  {/* Secondary Actions - Better spacing */}
-                  <div className="flex items-center gap-1 border-l border-border/50 pl-2 ml-1">
-                    <FadeIn delay={450}>
+                  {/* Secondary Actions */}
+                  <div className="flex items-center gap-1">
+                    <FadeIn delay={350}>
                       <HelpModal />
                     </FadeIn>
-                    <FadeIn delay={500}>
+                    <FadeIn delay={400}>
                       <ThemeToggle />
                     </FadeIn>
-                    <FadeIn delay={550}>
+                    <FadeIn delay={450}>
                       <AnimatedButton
                         variant="ghost"
                         size="sm"
                         onClick={handleLogout}
-                        className="flex items-center gap-1.5 shrink-0"
+                        className="flex items-center gap-2"
                         hoverScale
                         pressEffect
                       >
@@ -153,15 +122,10 @@ export default function DashboardPage() {
         </FadeIn>
 
         {/* Main Content */}
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Entry Reminder Banner */}
         <FadeIn delay={100}>
           <EntryReminderBanner onQuickAddClick={() => setAddWeightOpen(true)} />
-        </FadeIn>
-
-        {/* Projection Banner - Full Width */}
-        <FadeIn delay={150}>
-          <ProjectionBanner />
         </FadeIn>
 
         {/* Balanced Grid Layout */}
@@ -172,6 +136,11 @@ export default function DashboardPage() {
             <SlideIn delay={300} direction="up">
               <ActiveGoalDisplay />
             </SlideIn>
+
+            {/* Projection Banner - Positioned between Goal and Progress */}
+            <FadeIn delay={325}>
+              <ProjectionBanner />
+            </FadeIn>
 
             {/* This Week's Progress */}
             <SlideIn delay={350} direction="up">

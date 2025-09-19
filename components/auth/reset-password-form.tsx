@@ -70,7 +70,9 @@ export function ResetPasswordForm() {
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <div className="h-5">
+                    <FormMessage />
+                  </div>
                 </FormItem>
               )}
             />

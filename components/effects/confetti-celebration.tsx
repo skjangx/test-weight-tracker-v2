@@ -98,8 +98,8 @@ export function ConfettiCelebration({
 
     setParticles(prevParticles => {
       if (prevParticles.length === 0) {
-        // Animation complete
-        onComplete?.()
+        // Animation complete - schedule callback to avoid state update during render
+        setTimeout(() => onComplete?.(), 0)
         return []
       }
 
@@ -114,7 +114,7 @@ export function ConfettiCelebration({
     if (isActive && !animationRef.current) {
       // Show celebration toast (now using standardized function)
       showMilestoneToast(
-        `🎉 Milestone Achieved!`,
+        `Milestone Achieved!`,
         `Congratulations! You've lost ${milestone}kg!`
       )
 
@@ -233,7 +233,8 @@ export function useMilestoneCelebration() {
               weight_lost: currentMilestone,
               achieved_at: new Date().toISOString()
             }, {
-              onConflict: 'user_id,weight_lost'
+              onConflict: 'user_id,weight_lost',
+              ignoreDuplicates: false
             })
 
           if (insertError) {
