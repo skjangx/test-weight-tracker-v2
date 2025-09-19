@@ -49,7 +49,7 @@ export function HelpTooltip({
 export function WeightHelpTooltip() {
   return (
     <HelpTooltip
-      content="Enter your weight in kilograms (kg). If you log multiple entries for the same day, we'll automatically calculate the average."
+      content="Enter your weight in kilograms (kg). If you log multiple entries for the same day, we&apos;ll automatically calculate the average."
       size="sm"
     />
   )
@@ -58,7 +58,7 @@ export function WeightHelpTooltip() {
 export function GoalHelpTooltip() {
   return (
     <HelpTooltip
-      content="Set a realistic target weight and deadline. We'll track your progress and provide daily recommendations to help you reach your goal."
+      content="Set a realistic target weight and deadline. We&apos;ll track your progress and provide daily recommendations to help you reach your goal."
       size="sm"
     />
   )

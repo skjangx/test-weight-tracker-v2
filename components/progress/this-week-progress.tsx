@@ -165,7 +165,7 @@ export function ThisWeekProgress() {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Calendar className="h-5 w-5 text-muted-foreground" />
-          <span>This Week's Progress</span>
+          <span>This Week&apos;s Progress</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -267,7 +267,7 @@ export function ThisWeekProgress() {
         {weeklyStats.daysLogged >= 5 && (
           <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
             <p className="text-sm text-green-700 dark:text-green-300">
-              🎉 Great consistency! You've logged {weeklyStats.daysLogged} days this week.
+              🎉 Great consistency! You&apos;ve logged {weeklyStats.daysLogged} days this week.
             </p>
           </div>
         )}

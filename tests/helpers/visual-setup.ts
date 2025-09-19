@@ -1,5 +1,5 @@
 import { chromium, FullConfig } from '@playwright/test'
-import { loginWithTestUser } from './test-utils'
+import { authHelpers, testUser } from './test-utils'
 
 /**
  * Global setup for visual regression tests
@@ -19,7 +19,7 @@ async function globalSetup(_config: FullConfig) {
 
     // Ensure we have test data available
     // This could include creating a test user session or seeding data
-    await loginWithTestUser(page)
+    await authHelpers.login(page, testUser)
 
     // Store authentication state for reuse in tests
     await context.storageState({

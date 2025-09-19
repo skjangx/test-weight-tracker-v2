@@ -15,9 +15,9 @@ import { RefreshCw, Download, AlertTriangle, CheckCircle } from 'lucide-react'
  */
 export default function PerformancePage() {
   const [metrics, setMetrics] = useState<Record<string, number>>({})
-  const [navigationTiming, setNavigationTiming] = useState<any>(null)
-  const [resourceTiming, setResourceTiming] = useState<any[]>([])
-  const [webVitals, setWebVitals] = useState<Record<string, any>>({})
+  const [navigationTiming, setNavigationTiming] = useState<Record<string, number> | null>(null)
+  const [resourceTiming, setResourceTiming] = useState<Array<{ name: string; duration: number; size: number; type: string }>>([])
+  const [webVitals, setWebVitals] = useState<Record<string, number>>({})
   const { collectAllMetrics, getNavigationTiming, getResourceTiming } = usePerformanceMetrics()
 
   // Only show in development or with performance flag
@@ -44,8 +44,8 @@ export default function PerformancePage() {
     window.addEventListener('performance-update', handlePerformanceUpdate)
 
     // Collect web vitals from global if available
-    if (typeof window !== 'undefined' && (window as any).__webVitals) {
-      setWebVitals((window as any).__webVitals)
+    if (typeof window !== 'undefined' && (window as typeof window & { __webVitals?: Record<string, number> }).__webVitals) {
+      setWebVitals((window as typeof window & { __webVitals?: Record<string, number> }).__webVitals || {})
     }
 
     return () => {
@@ -295,16 +295,16 @@ export default function PerformancePage() {
             <CardContent>
               {Object.keys(webVitals).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {Object.entries(webVitals).map(([name, data]: [string, any]) => (
+                  {Object.entries(webVitals).map(([name, data]: [string, number]) => (
                     <Card key={name}>
                       <CardContent className="p-4 text-center">
-                        <div className="text-2xl font-bold">{data.value?.toFixed(2)}</div>
+                        <div className="text-2xl font-bold">{data.toFixed(2)}</div>
                         <div className="text-sm text-muted-foreground">{name}</div>
                         <Badge
                           className="mt-2"
-                          variant={data.rating === 'good' ? 'default' : data.rating === 'needs-improvement' ? 'secondary' : 'destructive'}
+                          variant="secondary"
                         >
-                          {data.rating}
+                          {name}
                         </Badge>
                       </CardContent>
                     </Card>

@@ -37,8 +37,8 @@ export function ConfettiCelebration({
   onComplete
 }: ConfettiCelebrationProps) {
   const [particles, setParticles] = useState<Particle[]>([])
-  const animationRef = useRef<number>()
-  const startTimeRef = useRef<number>()
+  const animationRef = useRef<number | undefined>(undefined)
+  const startTimeRef = useRef<number | undefined>(undefined)
 
   // Check for reduced motion preference
   const prefersReducedMotion = typeof window !== 'undefined' &&
@@ -115,7 +115,7 @@ export function ConfettiCelebration({
       // Show celebration toast (now using standardized function)
       showMilestoneToast(
         `Milestone Achieved!`,
-        `Congratulations! You've lost ${milestone}kg!`
+        `Congratulations! You&apos;ve lost ${milestone}kg!`
       )
 
       // Only create confetti if motion is not reduced

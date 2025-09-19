@@ -57,7 +57,7 @@ export function StreakDisplay({
       {/* Current Streak */}
       <div className="flex items-center space-x-1">
         {atRisk && (
-          <AlertTriangle className="h-3 w-3 text-orange-500" title="Streak at risk! Log today's weight." />
+          <AlertTriangle className="h-3 w-3 text-orange-500" />
         )}
         <span 
           className={`${sizeClasses[size]} text-muted-foreground font-medium`}

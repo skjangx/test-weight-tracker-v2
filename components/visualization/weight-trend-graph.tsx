@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useMemo, useRef, useEffect } from 'react'
-import { motion, useAnimation } from 'framer-motion'
+import { useMemo } from 'react'
+import { motion } from 'framer-motion'
 import {
-  LineChart,
   Line,
   XAxis,
   YAxis,
@@ -11,7 +10,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  Legend,
   Dot,
   Area,
   ComposedChart
@@ -20,7 +18,6 @@ import { parseISO, format, addDays } from 'date-fns'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
 import { ChartSkeleton } from '@/components/skeletons/chart-skeleton'
 import { useWeightData } from '@/hooks/use-weight-data'
 import { useActiveGoal } from '@/hooks/use-active-goal'
@@ -37,7 +34,7 @@ import { TrendingDown, TrendingUp, Minus, Target, Calendar } from 'lucide-react'
 import { MovingAverageHelpTooltip, MilestoneHelpTooltip } from '@/components/help/help-tooltip'
 
 // Helper function to calculate year divider lines
-const calculateYearDividers = (chartData: any[]) => {
+const calculateYearDividers = (chartData: { date: string; weight: number }[]) => {
   if (chartData.length < 2) return []
 
   const years = new Set<number>()
@@ -72,7 +69,7 @@ const calculateYearDividers = (chartData: any[]) => {
 }
 
 // Helper function to calculate goal guideline path
-const calculateGoalGuideline = (chartData: any[], goalWeight?: number, goalDeadline?: string) => {
+const calculateGoalGuideline = (chartData: { date: string; weight: number | null }[], goalWeight?: number, goalDeadline?: string) => {
   if (!goalWeight || !goalDeadline || chartData.length === 0) return []
 
   // chartData is sorted by date ASC (oldest first), so the LAST item is the most recent
@@ -87,6 +84,8 @@ const calculateGoalGuideline = (chartData: any[], goalWeight?: number, goalDeadl
   if (!lastDataPoint) return []
 
   const currentWeight = lastDataPoint.weight
+  if (currentWeight === null) return [] // No weight data
+
   const currentDate = parseISO(lastDataPoint.date)
   const deadlineDate = parseISO(goalDeadline)
 
@@ -126,7 +125,7 @@ const calculateGoalGuideline = (chartData: any[], goalWeight?: number, goalDeadl
 
 interface CustomTooltipProps {
   active?: boolean
-  payload?: any[]
+  payload?: Array<{ value: number; name: string; dataKey: string; color: string; payload: Record<string, unknown> }>
   label?: string
 }
 
@@ -134,7 +133,7 @@ interface CustomDotProps {
   cx?: number
   cy?: number
   fill?: string
-  payload?: any
+  payload?: { weight: number; isMilestone?: boolean }
 }
 
 // Custom tooltip component for interactive hover details (US-4.5)
@@ -150,52 +149,52 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 
   return (
     <div className="bg-background border border-border rounded-lg shadow-lg p-3 min-w-[200px]">
-      <p className="font-semibold text-sm mb-2">{data.displayDate}</p>
+      <p className="font-semibold text-sm mb-2">{String(data.displayDate)}</p>
 
       <div className="space-y-1 text-xs">
         <div className="flex justify-between items-center">
           <span className="text-muted-foreground">Weight:</span>
-          <span className="font-medium">{formatWeight(weight)}</span>
+          <span className="font-medium">{formatWeight(Number(weight))}</span>
         </div>
 
-        {movingAverage && (
+        {movingAverage ? (
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">7-entry avg:</span>
-            <span className="font-medium">{formatWeight(movingAverage)}</span>
+            <span className="font-medium">{formatWeight(Number(movingAverage))}</span>
           </div>
-        )}
+        ) : null}
 
-        {goalGuideline && (
+        {goalGuideline ? (
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Goal target:</span>
-            <span className="font-medium text-green-600 dark:text-green-400">{formatWeight(goalGuideline)}</span>
+            <span className="font-medium text-green-600 dark:text-green-400">{formatWeight(Number(goalGuideline))}</span>
           </div>
-        )}
+        ) : null}
         
         {change !== 0 && (
           <>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Change from before:</span>
-              <span className={`font-medium ${getChangeColor(change)}`}>
-                {formatWeightChange(change)}
+              <span className={`font-medium ${getChangeColor(Number(change))}`}>
+                {formatWeightChange(Number(change))}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Percentage:</span>
-              <span className={`font-medium ${getChangeColor(change)}`}>
-                {formatPercentChange(changePercent)}
+              <span className={`font-medium ${getChangeColor(Number(change))}`}>
+                {formatPercentChange(Number(changePercent))}
               </span>
             </div>
           </>
         )}
         
-        {data.isMilestone && data.milestoneData && (
+        {data.isMilestone && data.milestoneData && typeof data.milestoneData === 'object' && data.milestoneData && 'kgLost' in data.milestoneData ? (
           <div className="mt-2 pt-2 border-t border-border">
             <Badge variant="secondary" className="text-xs">
-              🎉 Milestone: {data.milestoneData.kgLost.toFixed(1)}kg lost!
+              🎉 Milestone: {Number(data.milestoneData.kgLost).toFixed(1)}kg lost!
             </Badge>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   )
@@ -266,11 +265,11 @@ const chartVariants = {
     y: 0,
     scale: 1,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       damping: 20,
       stiffness: 100,
       mass: 0.8,
-      when: "beforeChildren",
+      when: "beforeChildren" as const,
       staggerChildren: 0.1
     }
   }
@@ -282,7 +281,7 @@ const legendVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       damping: 15,
       stiffness: 120,
       delay: 0.3
@@ -575,7 +574,6 @@ export function WeightTrendGraph() {
                   isAnimationActive={true}
                   animationDuration={1500}
                   animationEasing="ease-in-out"
-                  animationDelay={200}
                 />
               )}
 
@@ -600,7 +598,6 @@ export function WeightTrendGraph() {
                   isAnimationActive={true}
                   animationDuration={1500}
                   animationEasing="ease-in-out"
-                  animationDelay={400}
                 />
               )}
             </ComposedChart>

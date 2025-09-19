@@ -49,7 +49,7 @@ function Button({
   const Comp = asChild ? Slot : "button"
 
   // Build props object without disabled if it's false/undefined to prevent hydration mismatch
-  const buttonProps: any = {
+  const buttonProps: React.ButtonHTMLAttributes<HTMLButtonElement> & { 'data-slot': string } = {
     "data-slot": "button",
     className: cn(buttonVariants({ variant, size, className })),
     ...props

@@ -224,7 +224,7 @@ export function usePerformanceMetrics() {
       domParsing: navigation.domInteractive - navigation.responseEnd,
       domReady: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
       windowLoad: navigation.loadEventEnd - navigation.loadEventStart,
-      total: navigation.loadEventEnd - navigation.navigationStart,
+      total: navigation.loadEventEnd - navigation.startTime,
     }
   }, [])
 

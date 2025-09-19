@@ -69,7 +69,7 @@ export const showWarningToast = (message: string, description?: string) => {
   })
 }
 
-export const showLoadingToast = (message: string, promise?: Promise<any>) => {
+export const showLoadingToast = (message: string, promise?: Promise<unknown>) => {
   if (promise) {
     return toast.promise(promise, {
       loading: message,

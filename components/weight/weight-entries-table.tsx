@@ -153,7 +153,7 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
         acc[date] = {
           ...entry,
           weights: [entry.weight],
-          memos: [entry.memo].filter(Boolean),
+          memos: [entry.memo].filter(Boolean) as string[],
           entries: [entry]
         }
       } else {
@@ -164,21 +164,30 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
         }
       }
       return acc
-    }, {} as Record<string, any>)
+    }, {} as Record<string, { date: string; weights: number[]; memos: string[]; entries: WeightEntry[] }>)
 
     // Convert to processed entries with calculations
-    const processed: ProcessedEntry[] = Object.values(groupedEntries).map((group: any) => {
+    const processed: ProcessedEntry[] = Object.values(groupedEntries).map((group: { date: string; weights: number[]; memos: string[]; entries: WeightEntry[] }) => {
       const avgWeight = Math.round((group.weights.reduce((sum: number, w: number) => sum + w, 0) / group.weights.length) * 100) / 100
       const isAveraged = group.weights.length > 1
       
       return {
-        ...group,
+        // Required WeightEntry fields
+        id: group.entries[0].id,
+        user_id: group.entries[0].user_id,
         weight: avgWeight,
+        date: group.date,
+        memo: isAveraged
+          ? `Average of ${group.weights.length} entries (${group.weights.join(', ')} kg)${group.memos.length > 0 ? '; ' + group.memos.join('; ') : ''}`
+          : group.memos.join('; ') || null,
+        created_at: group.entries[0].created_at,
+        updated_at: group.entries[0].updated_at,
+        // ProcessedEntry specific fields
         isAveraged,
         entryCount: group.weights.length,
-        memo: isAveraged 
-          ? `Average of ${group.weights.length} entries (${group.weights.join(', ')} kg)${group.memos.length > 0 ? '; ' + group.memos.join('; ') : ''}`
-          : group.memos.join('; ') || null
+        weights: group.weights,
+        memos: group.memos,
+        entries: group.entries
       }
     })
 

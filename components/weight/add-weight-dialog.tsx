@@ -121,7 +121,7 @@ export function AddWeightDialog({ open, onOpenChange, onSuccess, trigger }: AddW
         <DialogHeader>
           <DialogTitle>Add Weight Entry</DialogTitle>
           <DialogDescription>
-            Log your weight for today. You can add a memo to track how you're feeling.
+            Log your weight for today. You can add a memo to track how you&apos;re feeling.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

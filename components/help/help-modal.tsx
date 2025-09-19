@@ -3,17 +3,11 @@
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { 
   HelpCircle, 
   Target, 
   TrendingDown, 
-  Calendar,
   BarChart3,
-  Zap,
-  Trophy,
   Flame,
   Scale,
   Info
@@ -22,7 +16,7 @@ import {
 interface HelpSection {
   id: string
   title: string
-  icon: React.ComponentType<any>
+  icon: React.ComponentType<{ className?: string }>
   description: string
   content: Array<{
     subtitle: string
@@ -53,7 +47,7 @@ const helpSections: HelpSection[] = [
         tips: [
           'Weigh yourself in the morning after using the bathroom',
           'Use the same scale and wear similar clothing each time',
-          'Don\'t worry about daily fluctuations - focus on weekly trends'
+          'Don&apos;t worry about daily fluctuations - focus on weekly trends'
         ]
       }
     ]
@@ -79,7 +73,7 @@ const helpSections: HelpSection[] = [
         tips: [
           '7-day average is good for weekly trends',
           '14-day average shows longer-term patterns',
-          'Don\'t get discouraged by single-day increases'
+          'Don&apos;t get discouraged by single-day increases'
         ]
       }
     ]
@@ -121,7 +115,7 @@ const helpSections: HelpSection[] = [
         text: 'Your streak counts consecutive days of weight logging. Consistency helps you stay accountable and notice patterns.',
         tips: [
           'Aim for at least 7 days to see initial patterns',
-          'Don\'t break your streak for special occasions - just log honestly',
+          'Don&apos;t break your streak for special occasions - just log honestly',
           'Missing a day? Start a new streak immediately'
         ]
       },

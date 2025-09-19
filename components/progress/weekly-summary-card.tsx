@@ -88,7 +88,7 @@ export function WeeklySummaryCard({ className = '' }: WeeklySummaryCardProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Calendar className="h-5 w-5" />
-            <CardTitle>This Week's Progress</CardTitle>
+            <CardTitle>This Week&apos;s Progress</CardTitle>
           </div>
           
           {currentWeek.comparison && (
@@ -234,7 +234,7 @@ export function WeeklySummaryCard({ className = '' }: WeeklySummaryCardProps) {
                   </div>
                 ) : currentWeek.days_logged >= 5 ? (
                   <div className="text-blue-700">
-                    💪 Great consistency! You're building a strong habit.
+                    💪 Great consistency! You&apos;re building a strong habit.
                   </div>
                 ) : currentWeek.days_logged >= 3 ? (
                   <div className="text-orange-700">

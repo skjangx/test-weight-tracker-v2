@@ -17,7 +17,7 @@ export function WebVitals() {
     const vitalsUrl = 'https://vitals.vercel-analytics.com/v1/vitals'
 
     function getConnectionSpeed(): string {
-      const connection = (navigator as any)?.connection
+      const connection = (navigator as typeof navigator & { connection?: { effectiveType?: string } })?.connection
       if (!connection) return 'unknown'
       return connection.effectiveType || 'unknown'
     }
@@ -26,14 +26,14 @@ export function WebVitals() {
       const analyticsId = process.env.NEXT_PUBLIC_VERCEL_ANALYTICS_ID
 
       const body = {
-        dsn: analyticsId,
+        dsn: analyticsId || '',
         id: metric.id,
         page: window.location.pathname,
         href: window.location.href,
         event_name: metric.name,
         value: metric.value.toString(),
         speed: getConnectionSpeed(),
-        timestamp: Date.now(),
+        timestamp: Date.now().toString(),
       }
 
       // Send to Vercel Analytics if available
@@ -67,8 +67,8 @@ export function WebVitals() {
       }
 
       // Custom analytics integration point
-      if (typeof window !== 'undefined' && (window as any).gtag) {
-        ;(window as any).gtag('event', metric.name, {
+      if (typeof window !== 'undefined' && (window as typeof window & { gtag?: (...args: unknown[]) => void }).gtag) {
+        ;(window as typeof window & { gtag?: (...args: unknown[]) => void }).gtag!('event', metric.name, {
           event_category: 'Web Vitals',
           event_label: metric.id,
           value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
@@ -178,7 +178,7 @@ export const performanceUtils = {
 /**
  * Hook for measuring component render performance
  */
-export function usePerformanceMeasure(componentName: string, dependencies: any[] = []) {
+export function usePerformanceMeasure(componentName: string, dependencies: unknown[] = []) {
   useEffect(() => {
     performanceUtils.markStart(componentName)
 

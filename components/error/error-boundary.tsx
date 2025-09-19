@@ -139,9 +139,8 @@ Timestamp: ${new Date().toISOString()}
 interface ErrorBoundaryProps {
   children: React.ReactNode
   fallback?: React.ComponentType<ErrorFallbackProps>
-  onError?: (error: Error, errorInfo: { componentStack: string }) => void
+  onError?: (error: Error, errorInfo: { componentStack?: string | null }) => void
   resetKeys?: Array<string | number | boolean | undefined | null>
-  resetOnPropsChange?: boolean
 }
 
 export function ErrorBoundary({ 
@@ -149,9 +148,9 @@ export function ErrorBoundary({
   fallback = ErrorFallback,
   onError,
   resetKeys,
-  resetOnPropsChange = true 
+ 
 }: ErrorBoundaryProps) {
-  const handleError = (error: Error, errorInfo: { componentStack: string }) => {
+  const handleError = (error: Error, errorInfo: { componentStack?: string | null }) => {
     // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
       console.error('Error Boundary caught an error:', error)
@@ -173,7 +172,6 @@ export function ErrorBoundary({
       FallbackComponent={fallback}
       onError={handleError}
       resetKeys={resetKeys}
-      resetOnPropsChange={resetOnPropsChange}
     >
       {children}
     </ReactErrorBoundary>

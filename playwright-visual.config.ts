@@ -72,20 +72,15 @@ export default defineConfig({
 
   // Configure visual comparison
   expect: {
-    // Threshold for pixel comparison (0-1, where 1 = identical)
-    threshold: 0.2,
-
     // Max allowed pixel difference
     toHaveScreenshot: {
       threshold: 0.2,
-      mode: 'pixel',
       animations: 'disabled',
     },
 
     // Match screenshot options
     toMatchSnapshot: {
       threshold: 0.2,
-      mode: 'pixel',
     }
   },
 
