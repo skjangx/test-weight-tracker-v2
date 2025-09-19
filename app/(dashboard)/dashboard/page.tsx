@@ -122,16 +122,16 @@ export default function DashboardPage() {
         </FadeIn>
 
         {/* Main Content */}
-        <main className="container mx-auto px-4 py-8 max-w-7xl">
+        <main className="@container/main container mx-auto px-4 py-6 max-w-7xl lg:px-6 lg:py-8">
         {/* Entry Reminder Banner */}
         <FadeIn delay={100}>
           <EntryReminderBanner onQuickAddClick={() => setAddWeightOpen(true)} />
         </FadeIn>
 
         {/* Balanced Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 gap-4 md:gap-6 @4xl/main:grid-cols-12">
           {/* Left Column - Goals & Progress (5/12 = 42%) */}
-          <div className="lg:col-span-5 space-y-6">
+          <div className="@4xl/main:col-span-5 space-y-4 md:space-y-6">
             {/* Active Goal Display */}
             <SlideIn delay={300} direction="up">
               <ActiveGoalDisplay />
@@ -154,7 +154,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Right Column - Data & Visualization (7/12 = 58%) */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="@4xl/main:col-span-7 space-y-4 md:space-y-6">
             {/* Weight Trend Graph */}
             <SlideIn delay={450} direction="up">
               <ChartErrorBoundary>

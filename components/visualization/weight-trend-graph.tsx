@@ -436,7 +436,7 @@ export function WeightTrendGraph() {
   }
 
   return (
-    <Card>
+    <Card className="@container/card">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -450,8 +450,8 @@ export function WeightTrendGraph() {
         </div>
         
       </CardHeader>
-      
-      <CardContent>
+
+      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         {/* Chart controls */}
         <div className="flex items-center justify-between mb-4">
           
