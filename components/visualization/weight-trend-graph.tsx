@@ -443,12 +443,21 @@ export function WeightTrendGraph() {
             <Calendar className="h-5 w-5" />
             <CardTitle>Weight Trend</CardTitle>
           </div>
+          {/* Desktop: Show buttons in header */}
+          <div className="hidden @md/card:block">
+            <TimePeriodSelector
+              currentPeriod={config.period}
+              onPeriodChange={setPeriod}
+            />
+          </div>
+        </div>
+        {/* Mobile: Show buttons below header */}
+        <div className="@md/card:hidden mt-3">
           <TimePeriodSelector
             currentPeriod={config.period}
             onPeriodChange={setPeriod}
           />
         </div>
-        
       </CardHeader>
 
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
@@ -607,20 +616,22 @@ export function WeightTrendGraph() {
 
         {/* Chart legend */}
         <motion.div
-          className="flex items-center justify-between mt-2 text-xs text-muted-foreground"
+          className="flex items-center justify-center @md/card:justify-between mt-2 text-xs text-muted-foreground"
           variants={legendVariants}
           initial="hidden"
           animate="visible"
         >
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 @md/card:space-x-4">
             <div className="flex items-center space-x-1">
               <div className="w-3 h-0.5 bg-blue-600"></div>
-              <span>Daily weight</span>
+              <span className="hidden @sm/card:inline">Daily weight</span>
+              <span className="@sm/card:hidden">Daily</span>
             </div>
             {config.showMovingAverage && (
               <div className="flex items-center space-x-1">
                 <div className="w-3 h-0.5 bg-gray-500 border-dashed border-t"></div>
-                <span>7-entry average</span>
+                <span className="hidden @sm/card:inline">7-entry average</span>
+                <span className="@sm/card:hidden">7-avg</span>
               </div>
             )}
             {activeGoal && (
@@ -632,13 +643,15 @@ export function WeightTrendGraph() {
                       : "border-green-500"
                   }`}
                 ></div>
-                <span>Goal weight</span>
+                <span className="hidden @sm/card:inline">Goal weight</span>
+                <span className="@sm/card:hidden">Goal</span>
               </div>
             )}
             {goalGuideline.length > 0 && (
               <div className="flex items-center space-x-1">
                 <div className="w-3 h-0.5 border-dashed border-t-2 border-green-500"></div>
-                <span>Goal guideline</span>
+                <span className="hidden @sm/card:inline">Goal guideline</span>
+                <span className="@sm/card:hidden">Guide</span>
               </div>
             )}
           </div>

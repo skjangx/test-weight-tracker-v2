@@ -409,7 +409,7 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
           </div>
 
           {/* Month Navigation - Consistent with main layout */}
-          <div className="flex items-center justify-center space-x-2 pt-2">
+          <div className="flex items-center justify-center space-x-2 pt-6">
             <Button
               variant="outline"
               size="sm"
@@ -472,7 +472,7 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
         </div>
 
         {/* Month Navigation */}
-        <div className="flex items-center justify-center space-x-2 pt-2">
+        <div className="flex items-center justify-center space-x-2 pt-6">
           <Button
             variant="outline"
             size="sm"
@@ -501,52 +501,52 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
           {processedEntries.length > 0 ? (
             <>
               {/* Data Available - Show Summary Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-2 md:gap-4">
                 {/* Average Card */}
-                <div className="bg-background rounded-lg border p-4 space-y-2">
-                  <div className="flex items-center gap-2">
+                <div className="bg-background rounded-lg border p-3 md:p-4 space-y-1 md:space-y-2">
+                  <div className="flex items-center gap-1 md:gap-2">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm text-muted-foreground">Average</span>
+                    <span className="text-xs md:text-sm text-muted-foreground">Average</span>
                   </div>
-                  <p className="text-2xl font-semibold">{monthlyStats.weeklyAverage}kg</p>
+                  <p className="text-lg md:text-2xl font-semibold">{monthlyStats.weeklyAverage}kg</p>
                 </div>
 
                 {/* Progress Card */}
-                <div className="bg-background rounded-lg border p-4 space-y-2">
-                  <div className="flex items-center gap-2">
+                <div className="bg-background rounded-lg border p-3 md:p-4 space-y-1 md:space-y-2">
+                  <div className="flex items-center gap-1 md:gap-2">
                     <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                    <span className="text-sm text-muted-foreground">Progress</span>
+                    <span className="text-xs md:text-sm text-muted-foreground">Progress</span>
                   </div>
-                  <p className="text-2xl font-semibold">
+                  <p className="text-lg md:text-2xl font-semibold">
                     {monthlyStats.totalChange > 0 ? '+' : ''}{monthlyStats.totalChange ? monthlyStats.totalChange : '0'}kg
                   </p>
                 </div>
 
                 {/* Best Day Card */}
                 {monthlyStats.bestDay ? (
-                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 p-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <TrendingDown className="h-4 w-4 text-green-600" />
-                      <span className="text-sm text-green-600 dark:text-green-400">Best Day</span>
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 p-3 md:p-4 space-y-1 md:space-y-2">
+                    <div className="flex items-center gap-1 md:gap-2">
+                      <TrendingDown className="h-3 md:h-4 w-3 md:w-4 text-green-600" />
+                      <span className="text-xs md:text-sm text-green-600 dark:text-green-400">Best Day</span>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-2xl font-semibold text-green-700 dark:text-green-300">
+                      <p className="text-lg md:text-2xl font-semibold text-green-700 dark:text-green-300">
                         -{monthlyStats.bestDay.loss}kg
                       </p>
-                      <p className="text-sm text-green-600 dark:text-green-400">
+                      <p className="text-xs md:text-sm text-green-600 dark:text-green-400">
                         {format(new Date(monthlyStats.bestDay.date), 'MMM dd')}
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4 space-y-2">
-                    <div className="flex items-center gap-2">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-3 md:p-4 space-y-1 md:space-y-2">
+                    <div className="flex items-center gap-1 md:gap-2">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm text-blue-600 dark:text-blue-400">Consistency</span>
+                      <span className="text-xs md:text-sm text-blue-600 dark:text-blue-400">Consistency</span>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-lg font-semibold text-blue-700 dark:text-blue-300">Great!</p>
-                      <p className="text-sm text-blue-600 dark:text-blue-400">Steady progress</p>
+                      <p className="text-sm md:text-lg font-semibold text-blue-700 dark:text-blue-300">Great!</p>
+                      <p className="text-xs md:text-sm text-blue-600 dark:text-blue-400">Steady progress</p>
                     </div>
                   </div>
                 )}

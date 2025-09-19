@@ -228,23 +228,25 @@ export function ActiveGoalDisplay() {
             </p>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
+            <div className="flex flex-row gap-2 pt-4">
               <GoalCreationModal
                 trigger={
-                  <Button className="flex-1" size="lg">
+                  <Button className="flex-1 h-11" size="default">
                     <Plus className="h-4 w-4 mr-2" />
-                    Set Your First Goal
+                    <span className="hidden xs:inline">Set Your First Goal</span>
+                    <span className="xs:hidden">Set Goal</span>
                   </Button>
                 }
               />
               <Button
-                variant="outline"
-                size="lg"
+                variant="secondary"
+                size="sm"
                 onClick={() => setHistoryModalOpen(true)}
                 className="flex-1"
               >
                 <History className="h-4 w-4 mr-2" />
-                View History
+                <span className="hidden xs:inline">View History</span>
+                <span className="xs:hidden">History</span>
               </Button>
             </div>
           </div>
@@ -352,29 +354,29 @@ export function ActiveGoalDisplay() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex items-start space-x-3">
+          <div className="grid grid-cols-2 gap-3 md:gap-4">
+            <div className="flex items-start space-x-2 md:space-x-3">
               <div className="flex-shrink-0 mt-1">
-                <TrendingDown className="h-5 w-5 text-green-500" />
+                <TrendingDown className="h-4 md:h-5 w-4 md:w-5 text-green-500" />
               </div>
               <div>
-                <p className="text-sm font-medium">Target Weight</p>
-                <p className="text-2xl font-bold" data-testid="goal-target">
+                <p className="text-xs md:text-sm font-medium">Target Weight</p>
+                <p className="text-xl md:text-2xl font-bold" data-testid="goal-target">
                   {activeGoal.target_weight}kg
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start space-x-3">
+            <div className="flex items-start space-x-2 md:space-x-3">
               <div className="flex-shrink-0 mt-1">
-                <Calendar className="h-5 w-5 text-blue-500" />
+                <Calendar className="h-4 md:h-5 w-4 md:w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm font-medium">Deadline</p>
-                <p className="text-lg font-semibold">
+                <p className="text-xs md:text-sm font-medium">Deadline</p>
+                <p className="text-sm md:text-lg font-semibold">
                   {format(new Date(activeGoal.deadline), 'MMM dd, yyyy')}
                 </p>
-                <p className={`text-sm ${isOverdue ? 'text-red-500' : 'text-muted-foreground'}`} data-testid="days-remaining">
+                <p className={`text-xs md:text-sm ${isOverdue ? 'text-red-500' : 'text-muted-foreground'}`} data-testid="days-remaining">
                   {isOverdue
                     ? `${Math.abs(daysRemaining)} days overdue`
                     : `${daysRemaining} days remaining`
@@ -436,26 +438,28 @@ export function ActiveGoalDisplay() {
 
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <div className="flex flex-row gap-2 pt-4">
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => setEditModalOpen(true)}
               className="flex-1 justify-center"
               data-testid="update-goal-button"
             >
               <Pencil className="h-4 w-4 mr-2" />
-              Update Goal
+              <span className="hidden xs:inline">Update Goal</span>
+              <span className="xs:hidden">Update</span>
             </Button>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => setHistoryModalOpen(true)}
               className="flex-1"
               data-testid="goal-history-button"
             >
               <History className="h-4 w-4 mr-2" />
-              Goal History
+              <span className="hidden xs:inline">Goal History</span>
+              <span className="xs:hidden">History</span>
             </Button>
           </div>
 
@@ -652,27 +656,27 @@ export function ProjectionBanner() {
   }
 
   return (
-    <div className="w-full mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start space-x-3 flex-1">
-          <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+    <div className="w-full mb-6 p-3 md:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+      <div className="flex items-start justify-between gap-3 md:gap-4">
+        <div className="flex items-start space-x-2 md:space-x-3 flex-1">
+          <Calendar className="h-4 md:h-5 w-4 md:w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-1">
+            <p className="text-xs md:text-sm font-semibold text-blue-800 dark:text-blue-200 mb-1">
               Projected Goal Date
             </p>
-            <p className="text-xl font-bold text-blue-900 dark:text-blue-100 leading-tight">
+            <p className="text-sm md:text-xl font-bold text-blue-900 dark:text-blue-100 leading-tight">
               {format(new Date(projectedDate), 'EEEE, MMMM do, yyyy')}
             </p>
           </div>
         </div>
         <div className="text-right flex-shrink-0">
-          <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">Days to goal</p>
-          <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+          <p className="text-xs text-blue-600 dark:text-blue-400 mb-1 md:mb-2">Days to goal</p>
+          <p className="text-sm md:text-2xl font-bold text-blue-900 dark:text-blue-100">
             {differenceInDays(new Date(projectedDate), new Date())}
           </p>
         </div>
       </div>
-      <div className="mt-3 pt-3 border-t border-blue-200/50 dark:border-blue-700/50">
+      <div className="mt-2 md:mt-3 pt-2 md:pt-3 border-t border-blue-200/50 dark:border-blue-700/50">
         <p className="text-xs text-blue-600 dark:text-blue-400 text-center">
           Based on your 7-day weight loss trend
         </p>
