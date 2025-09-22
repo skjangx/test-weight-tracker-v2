@@ -7,7 +7,6 @@ import type { WeightEntry } from '@/lib/schemas/weight-entry'
 import {
   filterEntriesByPeriod,
   transformToChartData,
-  calculateMilestones,
   type ChartDataPoint,
   type TimePeriod,
   type ChartConfig,
@@ -146,14 +145,10 @@ export function useWeightData(): UseWeightDataResult {
     // Transform to chart data
     let chartData = transformToChartData(filteredEntries, config)
 
-    // Add milestones if we have starting weight (use chronologically first entry)
+    // Get starting weight for calculations (use chronologically first entry)
     const startingWeight = filteredEntries.length > 0
       ? filteredEntries[filteredEntries.length - 1].weight // Last item in filtered array is earliest by date (sorted desc)
       : undefined
-
-    if (startingWeight) {
-      chartData = calculateMilestones(chartData, startingWeight)
-    }
 
     // Calculate additional moving average data if needed
     if (config.showMovingAverage && chartData.length > 1) {

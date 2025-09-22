@@ -21,7 +21,6 @@ import { Badge } from '@/components/ui/badge'
 import { ChartSkeleton } from '@/components/skeletons/chart-skeleton'
 import { useWeightData } from '@/hooks/use-weight-data'
 import { useActiveGoal } from '@/hooks/use-active-goal'
-import { useMilestoneCelebrations } from '@/hooks/use-milestone-celebrations'
 import {
   formatWeight,
   formatWeightChange,
@@ -129,12 +128,6 @@ interface CustomTooltipProps {
   label?: string
 }
 
-interface CustomDotProps {
-  cx?: number
-  cy?: number
-  fill?: string
-  payload?: { weight: number; isMilestone?: boolean }
-}
 
 // Custom tooltip component for interactive hover details (US-4.5)
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
@@ -188,33 +181,11 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
           </>
         )}
         
-        {data.isMilestone && data.milestoneData && typeof data.milestoneData === 'object' && data.milestoneData && 'kgLost' in data.milestoneData ? (
-          <div className="mt-2 pt-2 border-t border-border">
-            <Badge variant="secondary" className="text-xs">
-              🎉 Milestone: {Number(data.milestoneData.kgLost).toFixed(1)}kg lost!
-            </Badge>
-          </div>
-        ) : null}
       </div>
     </div>
   )
 }
 
-// Custom milestone dot component
-const MilestoneDot = ({ cx, cy, fill, payload }: CustomDotProps) => {
-  if (!payload?.isMilestone) return null
-
-  return (
-    <Dot
-      cx={cx}
-      cy={cy}
-      r={6}
-      fill="#22c55e"
-      stroke="#16a34a"
-      strokeWidth={2}
-    />
-  )
-}
 
 
 // Time period selector component (US-4.2)
@@ -305,11 +276,6 @@ export function WeightTrendGraph() {
 
   const { activeGoal } = useActiveGoal()
 
-  // Milestone celebrations handled by MilestoneTracker component to prevent duplicates
-  const { triggerCelebration } = useMilestoneCelebrations({
-    chartData,
-    enabled: false
-  })
 
   // Chart dimensions and domain
   const chartDomain = useMemo(() => getChartDomain(chartData, activeGoal?.target_weight), [chartData, activeGoal?.target_weight])
@@ -560,7 +526,7 @@ export function WeightTrendGraph() {
                 dataKey="weight"
                 stroke="#2563eb"
                 strokeWidth={2}
-                dot={<MilestoneDot />}
+                dot={false}
                 activeDot={{ r: 4, stroke: "#2563eb", strokeWidth: 2 }}
                 name="Weight"
                 isAnimationActive={true}
