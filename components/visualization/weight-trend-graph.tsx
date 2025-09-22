@@ -10,14 +10,12 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  Dot,
   Area,
   ComposedChart
 } from 'recharts'
 import { parseISO, format, addDays } from 'date-fns'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { ChartSkeleton } from '@/components/skeletons/chart-skeleton'
 import { useWeightData } from '@/hooks/use-weight-data'
 import { useActiveGoal } from '@/hooks/use-active-goal'
@@ -29,8 +27,7 @@ import {
   getChartDomain,
   type TimePeriod
 } from '@/lib/utils/chart-helpers'
-import { TrendingDown, TrendingUp, Minus, Target, Calendar } from 'lucide-react'
-import { MovingAverageHelpTooltip, MilestoneHelpTooltip } from '@/components/help/help-tooltip'
+import { Calendar } from 'lucide-react'
 
 // Helper function to calculate year divider lines
 const calculateYearDividers = (chartData: { date: string; weight: number }[]) => {
@@ -130,7 +127,7 @@ interface CustomTooltipProps {
 
 
 // Custom tooltip component for interactive hover details (US-4.5)
-const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (!active || !payload || payload.length === 0) return null
 
   const data = payload[0].payload
@@ -266,10 +263,7 @@ export function WeightTrendGraph() {
     chartData,
     config,
     setPeriod,
-    setShowMovingAverage,
-    startingWeight,
     currentWeight,
-    totalWeightLost,
     loading,
     error
   } = useWeightData()
@@ -327,34 +321,6 @@ export function WeightTrendGraph() {
     )
   }, [chartData, goalGuideline])
 
-  // Calculate trend direction
-  const trendDirection = useMemo(() => {
-    if (chartData.length < 2) return 'flat'
-    
-    const first = chartData[0]
-    const last = chartData[chartData.length - 1]
-    const change = last.weight - first.weight
-    
-    if (change < -0.5) return 'down' // Weight loss
-    if (change > 0.5) return 'up'    // Weight gain
-    return 'flat'
-  }, [chartData])
-
-  const getTrendIcon = () => {
-    switch (trendDirection) {
-      case 'down': return <TrendingDown className="h-4 w-4 text-green-600" />
-      case 'up': return <TrendingUp className="h-4 w-4 text-red-600" />
-      default: return <Minus className="h-4 w-4 text-gray-600" />
-    }
-  }
-
-  const getTrendText = () => {
-    switch (trendDirection) {
-      case 'down': return 'Losing weight'
-      case 'up': return 'Gaining weight'
-      default: return 'Stable'
-    }
-  }
 
   if (loading) {
     return <ChartSkeleton title="Weight Trend" showControls={true} height={300} />

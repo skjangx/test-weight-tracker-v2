@@ -1,4 +1,4 @@
-import { format, subDays, isAfter, isBefore, parseISO } from 'date-fns'
+import { format, subDays, isAfter, parseISO } from 'date-fns'
 import type { WeightEntry } from '@/lib/schemas/weight-entry'
 
 export interface ChartDataPoint {

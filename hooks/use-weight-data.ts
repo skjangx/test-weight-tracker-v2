@@ -95,7 +95,7 @@ export function useWeightData(): UseWeightDataResult {
           }
         }
         return acc
-      }, {} as Record<string, any>)
+      }, {} as Record<string, WeightEntry & { count: number; totalWeight: number }>)
 
       const processedEntries = Object.values(groupedEntries) as WeightEntry[]
       setEntries(processedEntries)
