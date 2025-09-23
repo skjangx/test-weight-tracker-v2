@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, forwardRef, useImperativeHandle, useCallback, useMemo } from 'react'
-import { format, startOfMonth, endOfMonth, subMonths, addMonths, differenceInCalendarDays, isWithinInterval } from 'date-fns'
+import { format, startOfMonth, endOfMonth, subMonths, addMonths, isWithinInterval } from 'date-fns'
 import {
   Table,
   TableBody,
@@ -12,8 +12,6 @@ import {
 } from '@/components/ui/table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
 import { TableSkeleton } from '@/components/skeletons/table-skeleton'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/lib/auth/context'
@@ -21,7 +19,7 @@ import { useActiveGoal } from '@/hooks/use-active-goal'
 import type { WeightEntry } from '@/lib/schemas/weight-entry'
 import { EditWeightDialog } from './edit-weight-dialog'
 import { AddWeightDialog } from './add-weight-dialog'
-import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp, Calendar, Trophy, Target, Zap, Frown, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, TrendingDown, Calendar, Trophy, Target, Frown, Plus } from 'lucide-react'
 
 export interface WeightEntriesTableRef {
   refreshEntries: () => void
@@ -35,8 +33,7 @@ interface ProcessedEntry extends WeightEntry {
   entries?: WeightEntry[]
   dailyChange?: number
   dailyChangePercent?: number
-  movingAvgChange?: number
-  movingAvgChangePercent?: number
+  sevenDayAverage?: number
   remainingToGoal?: number
 }
 
@@ -178,7 +175,7 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
         weight: avgWeight,
         date: group.date,
         memo: isAveraged
-          ? `Average of ${group.weights.length} entries (${group.weights.join(', ')} kg)${group.memos.length > 0 ? '; ' + group.memos.join('; ') : ''}`
+          ? `Avg of ${group.weights.length} (${group.weights.join(', ')})${group.memos.length > 0 ? '; ' + group.memos.join('; ') : ''}`
           : group.memos.join('; ') || null,
         created_at: group.entries[0].created_at,
         updated_at: group.entries[0].updated_at,
@@ -205,19 +202,19 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
         current.dailyChangePercent = Math.round((change / previous.weight) * 10000) / 100
       }
       
-      // Calculate 7-day moving average change
-      if (i >= 6) {
-        const recentWeights = processed.slice(i - 6, i + 1).map(e => e.weight)
-        const olderWeights = processed.slice(i, i + 7).map(e => e.weight).filter(w => w !== undefined)
-        
-        if (olderWeights.length >= 7) {
-          const recentAvg = recentWeights.reduce((sum, w) => sum + w, 0) / recentWeights.length
-          const olderAvg = olderWeights.reduce((sum, w) => sum + w, 0) / olderWeights.length
-          const avgChange = recentAvg - olderAvg
-          
-          current.movingAvgChange = Math.round(avgChange * 100) / 100
-          current.movingAvgChangePercent = Math.round((avgChange / olderAvg) * 10000) / 100
-        }
+      // Calculate 7-day trend (average of previous 7 days, excluding current entry)
+      const currentDate = new Date(current.date)
+      const sevenDaysAgo = new Date(currentDate)
+      sevenDaysAgo.setDate(currentDate.getDate() - 7)
+
+      const previousEntries = processed.slice(i + 1).filter(entry => {
+        const entryDate = new Date(entry.date)
+        return entryDate > sevenDaysAgo && entryDate < currentDate
+      })
+
+      if (previousEntries.length > 0) {
+        const avgWeight = previousEntries.reduce((sum, entry) => sum + entry.weight, 0) / previousEntries.length
+        current.sevenDayAverage = Math.round(avgWeight * 10) / 10
       }
       
       // Calculate remaining to goal
@@ -599,7 +596,7 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
                 <TableCell>
                   <div>
                     <div className="font-medium">
-                      {format(new Date(entry.date), isMobile ? 'MMM dd' : 'MMM dd, yyyy')}
+                      {format(new Date(entry.date), 'MMM dd')}
                     </div>
                     {isMobile && entry.isAveraged && (
                       <div className="text-xs text-amber-600">
@@ -639,19 +636,10 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
                     </TableCell>
                     
                     <TableCell>
-                      {entry.movingAvgChange !== undefined ? (
-                        <div className={`flex items-center space-x-1 ${
-                          entry.movingAvgChange < 0 ? 'text-green-600' : 
-                          entry.movingAvgChange > 0 ? 'text-red-600' : 'text-gray-600'
-                        }`}>
-                          <Zap className="h-3 w-3" />
-                          <span className="font-medium text-xs">
-                            {entry.movingAvgChange >= 0 ? '+' : ''}{entry.movingAvgChange}kg
-                          </span>
-                          {entry.movingAvgChangePercent !== undefined && (
-                            <span className="text-xs">({entry.movingAvgChangePercent >= 0 ? '+' : ''}{entry.movingAvgChangePercent}%)</span>
-                          )}
-                        </div>
+                      {entry.sevenDayAverage !== undefined ? (
+                        <span className="font-medium text-sm">
+                          {entry.sevenDayAverage}kg
+                        </span>
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
                       )}
@@ -679,16 +667,10 @@ export const WeightEntriesTable = forwardRef<WeightEntriesTableRef>((props, ref)
                 
                 {isMobile && (
                   <TableCell>
-                    {entry.movingAvgChange !== undefined ? (
-                      <div className={`text-sm font-medium ${
-                        entry.movingAvgChange < 0 ? 'text-green-600' : 
-                        entry.movingAvgChange > 0 ? 'text-red-600' : 'text-gray-600'
-                      }`}>
-                        {entry.movingAvgChange >= 0 ? '+' : ''}{entry.movingAvgChange}kg
-                        {entry.movingAvgChangePercent !== undefined && (
-                          <div className="text-xs">{entry.movingAvgChangePercent >= 0 ? '+' : ''}{entry.movingAvgChangePercent}%</div>
-                        )}
-                      </div>
+                    {entry.sevenDayAverage !== undefined ? (
+                      <span className="text-sm font-medium">
+                        {entry.sevenDayAverage}kg
+                      </span>
                     ) : (
                       <span className="text-muted-foreground text-sm">-</span>
                     )}
